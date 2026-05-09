@@ -23,7 +23,9 @@
       "PowerShell(powershell -ExecutionPolicy Bypass -Command \"cd 'e:\\\\Bratsy_DP'; npm create tauri-app@latest bratsy-tauri -- --template vanilla --manager npm --yes 2>&1\" 2>&1)",
       "PowerShell(powershell -ExecutionPolicy Bypass -Command \"cd 'e:\\\\Bratsy_DP\\\\bratsy-tauri'; npm install 2>&1\" 2>&1)",
       "Bash(export PATH=\"$HOME/.cargo/bin:$PATH\")",
-      "Bash(npm run *)"
+      "Bash(npm run *)",
+      "Skill(gsd-execute-phase)",
+      "Skill(gsd-execute-phase:*)"
     ],
     "additionalDirectories": [
       "e:\\Bratsy_DP"

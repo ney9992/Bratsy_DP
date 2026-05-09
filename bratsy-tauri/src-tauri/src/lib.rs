@@ -1,13 +1,33 @@
 use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
+use std::sync::{Arc, Mutex};
 use std::fs;
+use std::io::{BufRead, BufReader};
 use std::path::PathBuf;
-use std::process::Command;
+use std::process::{Command, Stdio};
 
 #[derive(Serialize, Deserialize, Clone, Default)]
 pub struct Settings {
     pub plant_sim_path: String,
     pub work_dir: String,
     pub scripts_dir: String,
+}
+
+// ProcessMap хранит PID запущенных процессов: stage_id -> pid
+// Используем PID (u32) вместо Child, потому что Child не реализует Send
+// в контексте Arc<Mutex<...>> для шаринга между потоками
+pub struct ProcessMap(pub Arc<Mutex<HashMap<String, u32>>>);
+
+#[derive(Serialize, Clone)]
+pub struct StageStatusPayload {
+    pub stage: String,
+    pub status: String, // "running" | "done" | "error"
+}
+
+#[derive(Serialize, Clone)]
+pub struct StageLogPayload {
+    pub stage: String,
+    pub line: String,
 }
 
 fn settings_path() -> PathBuf {
@@ -34,48 +54,134 @@ fn save_settings(settings: Settings) -> Result<(), String> {
 }
 
 #[tauri::command]
-fn run_stage(stage: String) -> Result<String, String> {
+async fn run_stage(
+    stage: String,
+    state: tauri::State<'_, ProcessMap>,
+    app_handle: tauri::AppHandle,
+) -> Result<(), String> {
+    // T-02-01: allowlist — stage ID должен быть из фиксированного набора
+    let allowed = ["autocad", "pdm", "excel", "plantsim", "report"];
+    if !allowed.contains(&stage.as_str()) {
+        return Err("invalid stage".into());
+    }
+
+    // T-02-02: предотвратить повторный запуск уже активного этапа
+    {
+        let map = state.0.lock().unwrap();
+        if map.contains_key(&stage) {
+            return Err("already running".into());
+        }
+    }
+
+    let _ = app_handle.emit("stage-status", StageStatusPayload {
+        stage: stage.clone(),
+        status: "running".to_string(),
+    });
+
+    // Имитация скрипта — в Phase 3 заменится реальным PowerShell-вызовом
     let script = format!(
-        "'test' | Out-File -FilePath 'test_{}.txt' -Encoding UTF8; Write-Output 'done'",
-        stage
+        "for ($i=1; $i -le 5; $i++) {{ Write-Output '[{stage}] step $i/5'; Start-Sleep -Milliseconds 400 }}; Write-Output 'done'",
+        stage = stage
     );
-    let out = Command::new("powershell")
+
+    let mut child = Command::new("powershell")
         .args(["-ExecutionPolicy", "Bypass", "-Command", &script])
-        .output()
+        .stdout(Stdio::piped())
+        .stderr(Stdio::piped())
+        .spawn()
         .map_err(|e| e.to_string())?;
 
-    if out.status.success() {
-        Ok(String::from_utf8_lossy(&out.stdout).trim().to_string())
-    } else {
-        Err(String::from_utf8_lossy(&out.stderr).trim().to_string())
+    let pid = child.id();
+    {
+        let mut map = state.0.lock().unwrap();
+        map.insert(stage.clone(), pid);
     }
+
+    let stage_clone = stage.clone();
+    let app_clone = app_handle.clone();
+    let state_arc = state.0.clone();
+
+    // Читаем stdout построчно в отдельном потоке (BufReader::lines блокирующий)
+    tauri::async_runtime::spawn_blocking(move || {
+        if let Some(stdout) = child.stdout.take() {
+            let reader = BufReader::new(stdout);
+            for line in reader.lines() {
+                match line {
+                    Ok(l) => {
+                        let _ = app_clone.emit("stage-log", StageLogPayload {
+                            stage: stage_clone.clone(),
+                            line: l,
+                        });
+                    }
+                    Err(_) => break,
+                }
+            }
+        }
+
+        let status_ok = match child.wait() {
+            Ok(s) => s.success(),
+            Err(_) => {
+                let _ = child.kill();
+                false
+            }
+        };
+
+        {
+            let mut map = state_arc.lock().unwrap();
+            map.remove(&stage_clone);
+        }
+
+        let final_status = if status_ok { "done" } else { "error" };
+        let _ = app_clone.emit("stage-status", StageStatusPayload {
+            stage: stage_clone,
+            status: final_status.to_string(),
+        });
+    });
+
+    Ok(())
 }
 
 #[tauri::command]
-fn run_full_pipeline() -> Result<String, String> {
-    let script =
-        "'test' | Out-File -FilePath 'test_full_pipeline.txt' -Encoding UTF8; Write-Output 'done'";
-    let out = Command::new("powershell")
-        .args(["-ExecutionPolicy", "Bypass", "-Command", script])
-        .output()
-        .map_err(|e| e.to_string())?;
+async fn stop_stage(
+    stage: String,
+    state: tauri::State<'_, ProcessMap>,
+    app_handle: tauri::AppHandle,
+) -> Result<(), String> {
+    let pid = {
+        let mut map = state.0.lock().unwrap();
+        map.remove(&stage)
+    };
 
-    if out.status.success() {
-        Ok("Pipeline started".to_string())
-    } else {
-        Err(String::from_utf8_lossy(&out.stderr).trim().to_string())
+    if let Some(pid) = pid {
+        // taskkill /F /PID — принудительное завершение на Windows (T-02-03: PID из собственного State)
+        let _ = Command::new("taskkill")
+            .args(["/F", "/PID", &pid.to_string()])
+            .output();
+
+        let _ = app_handle.emit("stage-status", StageStatusPayload {
+            stage: stage.clone(),
+            status: "error".to_string(), // остановка = error-состояние (красный пилл)
+        });
+
+        let _ = app_handle.emit("stage-log", StageLogPayload {
+            stage,
+            line: "[остановлено пользователем]".to_string(),
+        });
     }
+
+    Ok(())
 }
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_opener::init())
+        .manage(ProcessMap(Arc::new(Mutex::new(HashMap::new()))))
         .invoke_handler(tauri::generate_handler![
             get_settings,
             save_settings,
             run_stage,
-            run_full_pipeline,
+            stop_stage,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
