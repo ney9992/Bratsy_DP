@@ -114,6 +114,12 @@ None — no external service configuration required.
 - Plan 02 can now wire the three settings fields (PlantSimPath, WorkDir, ScriptsDir) with file/folder dialogs and JSON persistence — `$saveBtn.Add_Click` is a stub ready to receive the save logic
 - No blockers for Phase 1 Plan 02
 
+## Self-Check: PASSED
+
+- app/create_test.ps1: FOUND (555 lines, +132 from original 423)
+- 01-01-SUMMARY.md: FOUND
+- Task commits: 5dddb73, ab5b2bc, 66c7850 — all present in git log
+
 ---
 *Phase: 01-nastrojki-i-konfiguraciya*
 *Completed: 2026-05-09*
