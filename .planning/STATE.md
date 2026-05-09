@@ -91,8 +91,8 @@ None
 
 ## Session Continuity
 
-**Last session:** 2026-05-09 — Phase 2 выполнена: ProcessMap State, async pipeline control, real-time logs, toast notifications.  
-**Next action:** `/gsd-discuss-phase 3` или `/gsd-plan-phase 3`
+**Last session:** 2026-05-10 — Phase 3 обсуждена: запуск PlantSim.exe, results.txt key=value, панель результатов (3 карточки), диалог ошибки с «Открыть настройки».  
+**Next action:** `/gsd-plan-phase 3`
 
 ---
 *Last updated: 2026-05-09 — Phase 2 complete*
