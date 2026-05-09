@@ -1,0 +1,12 @@
+{
+  "permissions": {
+    "allow": [
+      "Skill(gsd-pause-work)",
+      "Skill(gsd-pause-work:*)",
+      "Bash(mkdir -p e:\\\\Bratsy_DP\\\\.planning)"
+    ],
+    "additionalDirectories": [
+      "e:\\Bratsy_DP"
+    ]
+  }
+}
