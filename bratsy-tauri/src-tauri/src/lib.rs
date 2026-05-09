@@ -66,12 +66,13 @@ async fn run_stage(
         return Err("invalid stage".into());
     }
 
-    // T-02-02: предотвратить повторный запуск уже активного этапа
+    // T-02-02 (CR-02 fix): check + reserve в одном критическом разделе — предотвращает TOCTOU
     {
-        let map = state.0.lock().unwrap();
+        let mut map = state.0.lock().unwrap();
         if map.contains_key(&stage) {
             return Err("already running".into());
         }
+        map.insert(stage.clone(), 0); // sentinel — слот зарезервирован до spawn
     }
 
     let _ = app_handle.emit("stage-status", StageStatusPayload {
@@ -85,17 +86,23 @@ async fn run_stage(
         stage = stage
     );
 
+    // CR-01 fix: stderr(Stdio::null()) — предотвращает deadlock при заполнении pipe-буфера stderr
     let mut child = Command::new("powershell")
         .args(["-ExecutionPolicy", "Bypass", "-Command", &script])
         .stdout(Stdio::piped())
-        .stderr(Stdio::piped())
+        .stderr(Stdio::null())
         .spawn()
-        .map_err(|e| e.to_string())?;
+        .map_err(|e| {
+            // Spawn провалился — убираем зарезервированный sentinel
+            let mut map = state.0.lock().unwrap();
+            map.remove(&stage);
+            e.to_string()
+        })?;
 
     let pid = child.id();
     {
         let mut map = state.0.lock().unwrap();
-        map.insert(stage.clone(), pid);
+        map.insert(stage.clone(), pid); // upgrade sentinel → реальный PID
     }
 
     let stage_clone = stage.clone();
