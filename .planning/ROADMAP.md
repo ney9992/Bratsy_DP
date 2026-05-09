@@ -44,9 +44,9 @@ Plans:
 5. При завершении или ошибке этапа появляется уведомление в UI (toast или статусная строка) без какого-либо дополнительного действия со стороны пользователя
 **Plans:** 3 plans
 Plans:
-- [ ] 02-01-PLAN.md — Rust backend: ProcessMap State, async run_stage, stop_stage, stage-status/stage-log события
-- [ ] 02-02-PLAN.md — JS frontend: event listeners, toggle логика, updatePill(), appendLog(), showToast(), лог-панель HTML
-- [ ] 02-03-PLAN.md — CSS: pill-running/done/error, stage-running hover, лог-панель, toast анимации
+- [x] 02-01-PLAN.md — Rust backend: ProcessMap State, async run_stage, stop_stage, stage-status/stage-log события
+- [x] 02-02-PLAN.md — JS frontend: event listeners, toggle логика, updatePill(), appendLog(), showToast(), лог-панель HTML
+- [x] 02-03-PLAN.md — CSS: pill-running/done/error, stage-running hover, лог-панель, toast анимации
 **UI hint:** yes
 
 ### Phase 3: Интеграция Plant Simulation
