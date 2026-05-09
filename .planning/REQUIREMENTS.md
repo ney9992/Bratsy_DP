@@ -45,11 +45,11 @@
 |--------|-------|--------|
 | UI-02 | Phase 1 | Done |
 | INT-03 | Phase 1 | Done |
-| PIPE-01 | Phase 2 | Pending |
-| PIPE-02 | Phase 2 | Pending |
-| PIPE-03 | Phase 2 | Pending |
-| UI-01 | Phase 2 | Pending |
-| UI-03 | Phase 2 | Pending |
+| PIPE-01 | Phase 2 | Done |
+| PIPE-02 | Phase 2 | Done |
+| PIPE-03 | Phase 2 | Done |
+| UI-01 | Phase 2 | Done |
+| UI-03 | Phase 2 | Done |
 | INT-01 | Phase 3 | Pending |
 | INT-02 | Phase 3 | Pending |
 | PIPE-04 | Phase 3 | Pending |
