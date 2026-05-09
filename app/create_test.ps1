@@ -454,4 +454,102 @@ $runBtn.Add_Click({
 })
 $card.Controls.Add($runBtn)
 
+# ===== Settings Panel =====
+$settingsPanel = New-Object System.Windows.Forms.Panel
+$settingsPanel.Location = New-Object System.Drawing.Point(810, 0)
+$settingsPanel.Size = New-Object System.Drawing.Size(0, 560)
+$settingsPanel.BackColor = $colBgCard
+$settingsPanel.Visible = $false
+$settingsPanel.Add_Paint({
+    $g = $_.Graphics
+    $g.SmoothingMode = "AntiAlias"
+    $pen = New-Object System.Drawing.Pen $colBorder, 1
+    $g.DrawRectangle($pen, 0, 0, $settingsPanel.Width - 1, $settingsPanel.Height - 1)
+})
+$card.Controls.Add($settingsPanel)
+
+# Settings panel header
+$settingsTitleLbl = New-Object System.Windows.Forms.Label
+$settingsTitleLbl.Text = "Настройки"
+$settingsTitleLbl.Location = New-Object System.Drawing.Point(20, 20)
+$settingsTitleLbl.Size = New-Object System.Drawing.Size(260, 26)
+$settingsTitleLbl.Font = New-Object System.Drawing.Font("Segoe UI Semibold", 12)
+$settingsTitleLbl.ForeColor = $colTextPrimary
+$settingsTitleLbl.BackColor = $colBgCard
+$settingsPanel.Controls.Add($settingsTitleLbl)
+
+$settingsDivider = New-Object System.Windows.Forms.Panel
+$settingsDivider.Location = New-Object System.Drawing.Point(0, 56)
+$settingsDivider.Size = New-Object System.Drawing.Size(350, 1)
+$settingsDivider.BackColor = $colBorder
+$settingsPanel.Controls.Add($settingsDivider)
+
+# Footer divider
+$settingsFootDivider = New-Object System.Windows.Forms.Panel
+$settingsFootDivider.Location = New-Object System.Drawing.Point(0, 500)
+$settingsFootDivider.Size = New-Object System.Drawing.Size(350, 1)
+$settingsFootDivider.BackColor = $colBorder
+$settingsPanel.Controls.Add($settingsFootDivider)
+
+# Save button
+$saveBtn = New-Object System.Windows.Forms.Button
+$saveBtn.Text = "Сохранить"
+$saveBtn.Location = New-Object System.Drawing.Point(20, 512)
+$saveBtn.Size = New-Object System.Drawing.Size(140, 34)
+$saveBtn.BackColor = $colBgCard
+$saveBtn.ForeColor = $colTextPrimary
+$saveBtn.FlatStyle = "Flat"
+$saveBtn.FlatAppearance.BorderColor = $colBorder
+$saveBtn.FlatAppearance.BorderSize = 1
+$saveBtn.Font = New-Object System.Drawing.Font("Segoe UI", 9.5)
+$saveBtn.Cursor = [System.Windows.Forms.Cursors]::Hand
+$settingsPanel.Controls.Add($saveBtn)
+
+# Cancel button
+$cancelBtn = New-Object System.Windows.Forms.Button
+$cancelBtn.Text = "Отмена"
+$cancelBtn.Location = New-Object System.Drawing.Point(176, 512)
+$cancelBtn.Size = New-Object System.Drawing.Size(140, 34)
+$cancelBtn.BackColor = $colBgCard
+$cancelBtn.ForeColor = $colTextSec
+$cancelBtn.FlatStyle = "Flat"
+$cancelBtn.FlatAppearance.BorderColor = $colBorder
+$cancelBtn.FlatAppearance.BorderSize = 1
+$cancelBtn.Font = New-Object System.Drawing.Font("Segoe UI", 9.5)
+$cancelBtn.Cursor = [System.Windows.Forms.Cursors]::Hand
+$cancelBtn.Add_Click({
+    if (-not $settingsTimer.Enabled) {
+        $script:settingsClosing = $true
+        $settingsTimer.Start()
+    }
+})
+$settingsPanel.Controls.Add($cancelBtn)
+
+# Settings slide animation timer (same structure as CardTimer)
+$settingsPanelTargetW = 350
+$settingsAnimStep = 10
+
+$settingsTimer = New-Object System.Windows.Forms.Timer
+$settingsTimer.Interval = 12
+$settingsTimer.Add_Tick({
+    if ($script:settingsClosing) {
+        $newW = [Math]::Max(0, $settingsPanel.Width - $settingsAnimStep)
+        $settingsPanel.Width = $newW
+        $settingsPanel.Location = New-Object System.Drawing.Point((1160 - $newW), 0)
+        if ($newW -eq 0) {
+            $settingsTimer.Stop()
+            $settingsPanel.Visible = $false
+            $script:settingsPanelOpen = $false
+        }
+    } else {
+        $newW = [Math]::Min($settingsPanelTargetW, $settingsPanel.Width + $settingsAnimStep)
+        $settingsPanel.Width = $newW
+        $settingsPanel.Location = New-Object System.Drawing.Point((1160 - $newW), 0)
+        if ($newW -eq $settingsPanelTargetW) {
+            $settingsTimer.Stop()
+            $script:settingsPanelOpen = $true
+        }
+    }
+}.GetNewClosure())
+
 [void]$form.ShowDialog()
