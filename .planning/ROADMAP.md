@@ -28,7 +28,7 @@
 **Plans:** 2 plans
 Plans:
 - [x] 01-01-PLAN.md — Кнопка ⚙ в хедере + анимированная боковая панель настроек
-- [ ] 01-02-PLAN.md — Три поля выбора путей + валидация + settings.json load/save
+- [x] 01-02-PLAN.md — Три поля выбора путей + валидация + settings.json load/save
 **UI hint:** yes
 
 ### Phase 2: Управление пайплайном
