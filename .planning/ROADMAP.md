@@ -67,7 +67,7 @@ Plans:
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Настройки и конфигурация | 2/2 | Complete | 2026-05-09 |
-| 2. Управление пайплайном | 0/3 | Not started | - |
+| 2. Управление пайплайном | 3/3 | Complete | 2026-05-09 |
 | 3. Интеграция Plant Simulation | 0/? | Not started | - |
 
 ## Coverage Map
