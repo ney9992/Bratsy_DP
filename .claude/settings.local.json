@@ -10,7 +10,9 @@
       "Skill(gsd-plan-phase)",
       "Skill(gsd-plan-phase:*)",
       "Skill(gsd-code-review)",
-      "Skill(gsd-code-review:*)"
+      "Skill(gsd-code-review:*)",
+      "PowerShell(cd \"e:\\\\Bratsy_DP\"; Import-Module ps2exe; Invoke-ps2exe -InputFile \"app/create_test.ps1\" -OutputFile \"Bratsy.exe\" -NoConsole -Title \"Digital Factory Control Panel\" 2>&1)",
+      "PowerShell(cd \"e:\\\\Bratsy_DP\"; powershell -ExecutionPolicy Bypass -Command \"Import-Module ps2exe; Invoke-ps2exe -InputFile 'app/create_test.ps1' -OutputFile 'Bratsy.exe' -NoConsole -Title 'Digital Factory Control Panel'\" 2>&1)"
     ],
     "additionalDirectories": [
       "e:\\Bratsy_DP"

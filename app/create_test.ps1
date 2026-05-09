@@ -193,7 +193,7 @@ $card.Controls.Add($subLbl)
 # Status indicator
 $statusPanel = New-Object System.Windows.Forms.Panel
 $statusPanel.Location = New-Object System.Drawing.Point(960, 28)
-$statusPanel.Size = New-Object System.Drawing.Size(180, 22)
+$statusPanel.Size = New-Object System.Drawing.Size(150, 22)
 $statusPanel.BackColor = $colBgCard
 $statusPanel.Add_Paint({
     $g = $_.Graphics
