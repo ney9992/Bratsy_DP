@@ -678,4 +678,19 @@ $settingsTimer.Add_Tick({
     }
 }.GetNewClosure())
 
+# ===== Load settings on startup =====
+$form.Add_Load({
+    $settingsPath = Join-Path $scriptDir "settings.json"
+    if (Test-Path $settingsPath) {
+        try {
+            $cfg = Get-Content $settingsPath -Raw -Encoding UTF8 | ConvertFrom-Json
+            if ($cfg.PlantSimPath) { $tbPlantSimPath.Text = $cfg.PlantSimPath }
+            if ($cfg.WorkDir)      { $tbWorkDir.Text      = $cfg.WorkDir }
+            if ($cfg.ScriptsDir)   { $tbScriptsDir.Text   = $cfg.ScriptsDir }
+        } catch {
+            # Corrupt JSON — ignore, fields stay empty
+        }
+    }
+})
+
 [void]$form.ShowDialog()
