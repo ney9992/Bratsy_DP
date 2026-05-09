@@ -210,20 +210,20 @@ $card.Controls.Add($statusPanel)
 $script:settingsPanelOpen = $false
 
 $gearBtn = New-Object System.Windows.Forms.Panel
-$gearBtn.Location = New-Object System.Drawing.Point(1080, 22)
-$gearBtn.Size = New-Object System.Drawing.Size(40, 40)
-$gearBtn.BackColor = $colBgCard
+$gearBtn.Location = New-Object System.Drawing.Point(1114, 18)
+$gearBtn.Size = New-Object System.Drawing.Size(36, 36)
+$gearBtn.BackColor = $colMutedBg
 $gearBtn.Cursor = [System.Windows.Forms.Cursors]::Hand
 $gearBtn.Add_Paint({
     $g = $_.Graphics
     $g.SmoothingMode = "AntiAlias"
     $g.TextRenderingHint = "AntiAlias"
-    $f = New-Object System.Drawing.Font("Segoe UI", 18)
-    $brush = New-Object System.Drawing.SolidBrush $colTextSec
+    $f = New-Object System.Drawing.Font("Segoe UI Symbol", 16)
+    $brush = New-Object System.Drawing.SolidBrush $colMutedText
     $sf = New-Object System.Drawing.StringFormat
     $sf.Alignment = "Center"
     $sf.LineAlignment = "Center"
-    $g.DrawString([char]0x2699, $f, $brush, (New-Object System.Drawing.RectangleF 0, 0, 40, 40), $sf)
+    $g.DrawString([char]0x2699, $f, $brush, (New-Object System.Drawing.RectangleF 0, 0, 36, 36), $sf)
 })
 $gearBtn.Add_Click({
     if (-not $settingsTimer.Enabled) {
