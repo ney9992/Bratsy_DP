@@ -49,6 +49,88 @@ function Get-LogoImage($logoFile, $fallbackGlyph, $bgColor, $fgColor) {
     return $bmp
 }
 
+# ===== Settings field helper =====
+function Add-SettingsField {
+    param(
+        [System.Windows.Forms.Panel]$parent,
+        [string]$labelText,
+        [int]$yPos,
+        [string]$placeholder,
+        [string]$dialogType   # "file" or "folder"
+    )
+
+    $fieldW = 310  # ширина TextBox
+
+    $lbl = New-Object System.Windows.Forms.Label
+    $lbl.Text = $labelText
+    $lbl.Location = New-Object System.Drawing.Point(20, $yPos)
+    $lbl.Size = New-Object System.Drawing.Size($fieldW, 18)
+    $lbl.Font = New-Object System.Drawing.Font("Segoe UI", 8.5)
+    $lbl.ForeColor = $colTextSec
+    $lbl.BackColor = $colBgCard
+    $parent.Controls.Add($lbl)
+
+    $tb = New-Object System.Windows.Forms.TextBox
+    $tb.ReadOnly = $true
+    $tb.Location = New-Object System.Drawing.Point(20, ($yPos + 22))
+    $tb.Size = New-Object System.Drawing.Size(270, 24)
+    $tb.BackColor = $colBgPage
+    $tb.ForeColor = $colTextPrimary
+    $tb.BorderStyle = "FixedSingle"
+    $tb.Font = New-Object System.Drawing.Font("Segoe UI", 9)
+    $tb.Text = $placeholder
+    $parent.Controls.Add($tb)
+
+    # Метка ошибки (скрыта по умолчанию)
+    $errLbl = New-Object System.Windows.Forms.Label
+    $errLbl.Text = "Путь не найден"
+    $errLbl.Location = New-Object System.Drawing.Point(20, ($yPos + 50))
+    $errLbl.Size = New-Object System.Drawing.Size($fieldW, 16)
+    $errLbl.Font = New-Object System.Drawing.Font("Segoe UI", 8)
+    $errLbl.ForeColor = $colErrorText
+    $errLbl.BackColor = $colBgCard
+    $errLbl.Visible = $false
+    $parent.Controls.Add($errLbl)
+
+    $browseBtn = New-Object System.Windows.Forms.Button
+    $browseBtn.Text = "..."
+    $browseBtn.Location = New-Object System.Drawing.Point(296, ($yPos + 20))
+    $browseBtn.Size = New-Object System.Drawing.Size(34, 28)
+    $browseBtn.FlatStyle = "Flat"
+    $browseBtn.FlatAppearance.BorderColor = $colBorder
+    $browseBtn.FlatAppearance.BorderSize = 1
+    $browseBtn.Font = New-Object System.Drawing.Font("Segoe UI", 9)
+    $browseBtn.Cursor = [System.Windows.Forms.Cursors]::Hand
+    $browseBtn.BackColor = $colBgCard
+    $browseBtn.ForeColor = $colTextPrimary
+
+    if ($dialogType -eq "file") {
+        $browseBtn.Add_Click({
+            $dlg = New-Object System.Windows.Forms.OpenFileDialog
+            $dlg.Filter = "Plant Simulation files (*.spp)|*.spp|All files (*.*)|*.*"
+            $dlg.Title = "Выберите файл Plant Simulation"
+            if ($dlg.ShowDialog() -eq "OK") {
+                $tb.Text = $dlg.FileName
+                $tb.BackColor = $colBgPage
+                $errLbl.Visible = $false
+            }
+        }.GetNewClosure())
+    } else {
+        $browseBtn.Add_Click({
+            $dlg = New-Object System.Windows.Forms.FolderBrowserDialog
+            $dlg.Description = "Выберите папку"
+            if ($dlg.ShowDialog() -eq "OK") {
+                $tb.Text = $dlg.SelectedPath
+                $tb.BackColor = $colBgPage
+                $errLbl.Visible = $false
+            }
+        }.GetNewClosure())
+    }
+    $parent.Controls.Add($browseBtn)
+
+    return [PSCustomObject]@{ TextBox = $tb; ErrorLabel = $errLbl }
+}
+
 # ===== Form =====
 $form = New-Object System.Windows.Forms.Form
 $form.Text = "Digital factory control panel"
