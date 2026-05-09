@@ -61,8 +61,8 @@ None
 
 ## Session Continuity
 
-**Last session:** 2026-05-09 — Phase 1 context gathered (discuss-phase завершён)  
-**Next action:** `/gsd-plan-phase 1`
+**Last session:** 2026-05-09 — Phase 1 планирование завершено, 2 плана в 2 волнах  
+**Next action:** `/gsd-execute-phase 1`
 
 ---
 *Last updated: 2026-05-09*
