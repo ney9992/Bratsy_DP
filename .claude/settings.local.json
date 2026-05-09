@@ -3,7 +3,10 @@
     "allow": [
       "Skill(gsd-pause-work)",
       "Skill(gsd-pause-work:*)",
-      "Bash(mkdir -p e:\\\\Bratsy_DP\\\\.planning)"
+      "Bash(mkdir -p e:\\\\Bratsy_DP\\\\.planning)",
+      "Bash(gsd-sdk query *)",
+      "Bash(git add *)",
+      "Bash(git commit *)"
     ],
     "additionalDirectories": [
       "e:\\Bratsy_DP"
