@@ -62,7 +62,7 @@ Plans:
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Настройки и конфигурация | 0/2 | Not started | - |
+| 1. Настройки и конфигурация | 1/2 | In progress | - |
 | 2. Управление пайплайном | 0/? | Not started | - |
 | 3. Интеграция Plant Simulation | 0/? | Not started | - |
 
