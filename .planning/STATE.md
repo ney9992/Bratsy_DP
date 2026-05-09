@@ -65,9 +65,9 @@ Progress: [ Phase 1 ] [ Phase 2 ] [ Phase 3 ]
 
 ### Existing Prototype
 
-- `app/create_test.ps1` (423 lines): functional UI prototype with simulated pipeline stages
-- Has: 5-stage pipeline UI (AutoCAD, Vault, Excel, PlantSim, Report), real-time metrics display, color palette, logo loader
-- Does NOT yet have: real process execution, settings persistence, real PlantSim macro call, results parsing
+- `app/create_test.ps1` (555 lines): functional UI prototype with simulated pipeline stages + settings panel shell
+- Has: 5-stage pipeline UI (AutoCAD, Vault, Excel, PlantSim, Report), real-time metrics display, color palette, logo loader, gear button, sliding settings panel (350px) with animation
+- Does NOT yet have: real process execution, settings persistence (fields + JSON save), real PlantSim macro call, results parsing
 
 ### Constraints
 
