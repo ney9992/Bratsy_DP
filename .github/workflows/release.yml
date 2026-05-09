@@ -1,0 +1,52 @@
+name: Build & Release
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install ps2exe
+        shell: pwsh
+        run: Install-Module -Name ps2exe -Force -Scope CurrentUser
+
+      - name: Generate icon
+        shell: pwsh
+        run: powershell -ExecutionPolicy Bypass -File app/generate_icon.ps1
+
+      - name: Build exe
+        shell: pwsh
+        run: |
+          $tag = "${{ github.ref_name }}".TrimStart('v')
+          $version = "$tag.0"
+          Invoke-ps2exe `
+            -InputFile  "app/create_test.ps1" `
+            -OutputFile "Bratsy.exe" `
+            -NoConsole `
+            -iconFile   "app/icon.ico" `
+            -Title      "Digital Factory Control Panel" `
+            -Version    $version
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
+        with:
+          name: "Digital Factory Control Panel ${{ github.ref_name }}"
+          body: |
+            ## Что нового
+            _Опиши изменения здесь перед созданием тега_
+
+            ## Установка
+            1. Скачай `Bratsy.exe`
+            2. Запусти — установка не требуется
+
+            > Требования: Windows 10+
+          files: Bratsy.exe
+          draft: false
+          prerelease: false
