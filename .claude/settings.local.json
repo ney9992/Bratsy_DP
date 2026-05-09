@@ -6,7 +6,9 @@
       "Bash(mkdir -p e:\\\\Bratsy_DP\\\\.planning)",
       "Bash(gsd-sdk query *)",
       "Bash(git add *)",
-      "Bash(git commit *)"
+      "Bash(git commit *)",
+      "Skill(gsd-plan-phase)",
+      "Skill(gsd-plan-phase:*)"
     ],
     "additionalDirectories": [
       "e:\\Bratsy_DP"
