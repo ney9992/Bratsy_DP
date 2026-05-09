@@ -47,7 +47,7 @@ Progress: [ Phase 1 ] [ Phase 2 ] [ Phase 3 ]
 |--------|-------|
 | Phases total | 3 |
 | Phases complete | 1 |
-| Plans complete | 5/5 (Phase 1 + Phase 2 complete) |
+| Plans complete | 5/8 (Phase 1 + Phase 2 complete; Phase 3 planned: 3 plans) |
 | Requirements covered | 10/10 |
 | Requirements done | 8/10 (UI-01, UI-02, UI-03, INT-03, PIPE-01, PIPE-02, PIPE-03) |
 
