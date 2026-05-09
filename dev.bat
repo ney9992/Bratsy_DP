@@ -1,4 +1,4 @@
 @echo off
 cd /d "%~dp0bratsy-tauri"
-cargo tauri dev
+npm run tauri dev
 pause
