@@ -409,6 +409,7 @@ for ($i = 0; $i -lt $stages.Count; $i++) {
             $card.Hovering = $true
             $card.BringToFront()
             $card.AnimTimer.Start()
+            if ($script:settingsPanelOpen) { $settingsPanel.BringToFront() }
         }
     }
     $hoverLeave = {
