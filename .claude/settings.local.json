@@ -25,7 +25,10 @@
       "Bash(export PATH=\"$HOME/.cargo/bin:$PATH\")",
       "Bash(npm run *)",
       "Skill(gsd-execute-phase)",
-      "Skill(gsd-execute-phase:*)"
+      "Skill(gsd-execute-phase:*)",
+      "PowerShell(Test-Path \"$env:USERPROFILE\\\\.cargo\\\\bin\\\\cargo.exe\"; ls \"$env:USERPROFILE\\\\.cargo\\\\bin\\\\\" -ErrorAction SilentlyContinue | Select-Object -First 5 Name)",
+      "PowerShell($env:PATH += \";$env:USERPROFILE\\\\.cargo\\\\bin\"; Set-Location \"e:\\\\Bratsy_DP\\\\bratsy-tauri\"; cargo check 2>&1 | Select-Object -Last 15)",
+      "PowerShell($env:PATH += \";$env:USERPROFILE\\\\.cargo\\\\bin\"; Set-Location \"e:\\\\Bratsy_DP\\\\bratsy-tauri\\\\src-tauri\"; cargo check 2>&1 | Select-Object -Last 15)"
     ],
     "additionalDirectories": [
       "e:\\Bratsy_DP"

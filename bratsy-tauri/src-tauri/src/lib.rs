@@ -5,6 +5,7 @@ use std::fs;
 use std::io::{BufRead, BufReader};
 use std::path::PathBuf;
 use std::process::{Command, Stdio};
+use tauri::Emitter;
 
 #[derive(Serialize, Deserialize, Clone, Default)]
 pub struct Settings {
