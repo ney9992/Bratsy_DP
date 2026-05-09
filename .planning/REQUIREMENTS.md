@@ -55,4 +55,4 @@
 | PIPE-04 | Phase 3 | Pending |
 
 ---
-*Last updated: 2026-05-09 после выполнения Plan 01-02 — Phase 1 complete (UI-02, INT-03 done)*
+*Last updated: 2026-05-09 — Phase 2 complete (PIPE-01, PIPE-02, PIPE-03, UI-01, UI-03 done)*
