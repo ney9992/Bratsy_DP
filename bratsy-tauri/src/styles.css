@@ -202,6 +202,9 @@ body {
 .pill-ready  { background: var(--green-light); color: var(--green); }
 .pill-active { background: var(--blue-light);  color: var(--blue); }
 .pill-idle   { background: var(--gray-light);  color: var(--gray); }
+.pill-running { background: var(--blue-light);  color: var(--blue); }
+.pill-done    { background: var(--green-light); color: var(--green); }
+.pill-error   { background: var(--red-light);   color: var(--red); }
 
 /* Status dots */
 .dot {
