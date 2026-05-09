@@ -91,8 +91,8 @@ None
 
 ## Session Continuity
 
-**Last session:** 2026-05-10 — Phase 3 обсуждена: запуск PlantSim.exe, results.txt key=value, панель результатов (3 карточки), диалог ошибки с «Открыть настройки».  
-**Next action:** `/gsd-plan-phase 3`
+**Last session:** 2026-05-10 — Phase 3 спланирована: 3 плана (03-00 mock, 03-01 Rust backend, 03-02 Frontend). Все требования INT-01, INT-02, PIPE-04 покрыты.
+**Next action:** `/gsd-execute-phase 3`
 
 ---
-*Last updated: 2026-05-09 — Phase 2 complete*
+*Last updated: 2026-05-10 — Phase 3 planned (3 plans ready to execute)*
