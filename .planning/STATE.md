@@ -26,9 +26,9 @@ progress:
 
 ## Current Position
 
-**Current Phase:** Phase 1 — Настройки и конфигурация — COMPLETE  
-**Current Plan:** 01-02 (Wave 2 из 2) — COMPLETE  
-**Status:** Phase 1 complete, ready for Phase 2  
+**Current Phase:** Phase 2 — Управление пайплайном  
+**Current Plan:** 02-01 (Wave 1 из 3)  
+**Status:** Ready to execute  
 
 ```
 Progress: [ Phase 1 ] [ Phase 2 ] [ Phase 3 ]
