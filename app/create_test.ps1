@@ -19,6 +19,8 @@ $colInfoBg       = [System.Drawing.Color]::FromArgb(230, 241, 251)
 $colInfoText     = [System.Drawing.Color]::FromArgb(12, 68, 124)
 $colMutedBg      = [System.Drawing.Color]::FromArgb(241, 239, 232)
 $colMutedText    = [System.Drawing.Color]::FromArgb(95, 94, 90)
+$colErrorBg      = [System.Drawing.Color]::FromArgb(253, 235, 236)
+$colErrorText    = [System.Drawing.Color]::FromArgb(180, 35, 45)
 
 # ===== Logo loader with fallback =====
 function Get-LogoImage($logoFile, $fallbackGlyph, $bgColor, $fgColor) {
