@@ -33,6 +33,14 @@ pub struct StageLogPayload {
     pub line: String,
 }
 
+#[derive(Serialize, Clone)]
+pub struct StageResultsPayload {
+    pub stage: String,
+    pub load: f32,
+    pub throughput: f32,
+    pub cycle_time: f32,
+}
+
 fn settings_path() -> PathBuf {
     std::env::current_exe()
         .ok()
