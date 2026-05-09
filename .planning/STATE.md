@@ -59,6 +59,9 @@ Progress: [ Phase 1 ] [ Phase 2 ] [ Phase 3 ]
 - Script/macro launch instead of COM: fewer version-dependency issues, easier to maintain
 - ps2exe: single .exe, no installer — factory PCs may lack installation rights
 - MVP focus: monitoring + pipeline control (team must see status and start/stop stages)
+- Panel+Add_Paint for gear button: consistent with headerIcon pattern, avoids Button rendering issues
+- Timer.Enabled guard before Start(): prevents double-click animation corruption (T-01-02)
+- GetNewClosure() on settingsTimer tick: captures panel vars in closure, matches metricsTimer pattern
 
 ### Existing Prototype
 
