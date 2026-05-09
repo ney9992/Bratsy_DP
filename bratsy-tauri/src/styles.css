@@ -176,6 +176,19 @@ body {
   border-width: 2px;
 }
 
+/* Активный этап (запущен) — синяя рамка */
+.stage-card.stage-running {
+  border-color: var(--blue);
+  border-width: 2px;
+}
+
+/* При hover на запущенный этап — красная рамка (подсказка: клик = стоп) */
+.stage-card.stage-running:hover {
+  border-color: var(--red);
+  box-shadow: 0 8px 24px rgba(192, 57, 43, 0.15);
+  transform: translateY(-3px);
+}
+
 .stage-icon-wrap {
   width: 72px; height: 72px;
   border-radius: 20px;
