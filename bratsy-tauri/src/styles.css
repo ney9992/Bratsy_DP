@@ -216,6 +216,7 @@ body {
 .dot-green { background: #34C759; }
 .dot-blue  { background: var(--blue); }
 .dot-gray  { background: var(--gray); }
+.dot-red   { background: #FF3B30; }
 
 /* ── Footer ── */
 .footer {
