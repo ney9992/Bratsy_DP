@@ -618,6 +618,39 @@ $tbPlantSimPath = $fieldPlantSim.TextBox
 $tbWorkDir      = $fieldWorkDir.TextBox
 $tbScriptsDir   = $fieldScripts.TextBox
 
+$saveBtn.Add_Click({
+    $hasError = $false
+
+    # Валидация: Test-Path для непустых полей (D-10, D-11, D-12)
+    foreach ($field in @($fieldPlantSim, $fieldWorkDir, $fieldScripts)) {
+        $tb  = $field.TextBox
+        $err = $field.ErrorLabel
+        if ($tb.Text -ne "" -and -not (Test-Path $tb.Text)) {
+            $tb.BackColor = $colErrorBg
+            $err.Visible  = $true
+            $hasError      = $true
+        } else {
+            $tb.BackColor = $colBgPage
+            $err.Visible  = $false
+        }
+    }
+
+    if ($hasError) { return }
+
+    # Сохранение (D-07, D-09)
+    $settingsPath = Join-Path $scriptDir "settings.json"
+    $cfg = [PSCustomObject]@{
+        PlantSimPath = $tbPlantSimPath.Text
+        WorkDir      = $tbWorkDir.Text
+        ScriptsDir   = $tbScriptsDir.Text
+    }
+    $cfg | ConvertTo-Json | Out-File -FilePath $settingsPath -Encoding UTF8
+
+    # Закрыть панель анимацией
+    $script:settingsClosing = $true
+    $settingsTimer.Start()
+}.GetNewClosure())
+
 # Settings slide animation timer (same structure as CardTimer)
 $settingsPanelTargetW = 350
 $settingsAnimStep = 10
