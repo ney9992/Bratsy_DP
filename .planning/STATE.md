@@ -27,12 +27,12 @@ progress:
 ## Current Position
 
 **Current Phase:** Phase 3 — Интеграция Plant Simulation  
-**Current Plan:** —  
-**Status:** Milestone v1 Complete ✓  
+**Current Plan:** работа с входными/выходными данными Plant Simulation  
+**Status:** v1 в процессе — Phase 3 реализована, но milestone не закрыт  
 
 ```
-Progress: [ Phase 1 ] [ Phase 2 ] [ Phase 3 ]
-           Complete    Complete    Blocked
+Progress: [ Phase 1 ] [ Phase 2 ] [ Phase 3 ] [ Phase 4? ]
+           Complete    Complete    UI/Infra    Data I/O (pending)
 ```
 
 **Phase Goals:**
