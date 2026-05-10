@@ -12,6 +12,7 @@ pub struct Settings {
     pub plant_sim_path: String,
     pub work_dir: String,
     pub scripts_dir: String,
+    pub plant_sim_shortcut: String, // путь к .lnk-ярлыку Plant Simulation
 }
 
 // ProcessMap хранит PID запущенных процессов: stage_id -> pid
