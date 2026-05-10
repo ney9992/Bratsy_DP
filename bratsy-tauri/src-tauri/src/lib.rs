@@ -76,6 +76,20 @@ async fn run_stage(
         return Err("invalid stage".into());
     }
 
+    // D-13: валидация путей для plantsim ДО резервирования sentinel (Pitfall #2 prevention)
+    if stage == "plantsim" {
+        let settings = get_settings(); // sync fn — безопасно в async контексте (Pitfall #1)
+        if !std::path::Path::new(&settings.plant_sim_exe).exists() {
+            return Err("config: PlantSimulation.exe не найден. Проверьте путь в настройках.".into());
+        }
+        if !std::path::Path::new(&settings.plant_sim_path).exists() {
+            return Err("config: файл .spp не найден. Проверьте путь в настройках.".into());
+        }
+        if !std::path::Path::new(&settings.plant_sim_macro).exists() {
+            return Err("config: файл .spm макроса не найден. Проверьте путь в настройках.".into());
+        }
+    }
+
     // T-02-02 (CR-02 fix): check + reserve в одном критическом разделе — предотвращает TOCTOU
     {
         let mut map = state.0.lock().unwrap();
