@@ -60,21 +60,13 @@ async function runPlantSim() {
       }
     } catch { /* некритично */ }
 
-    // Шаг 2: выбрать .spp файл модели
-    let sppPath;
-    try {
-      const { open } = await import('https://cdn.jsdelivr.net/npm/@tauri-apps/plugin-dialog@2/index.js');
-      const saved = await invoke('get_settings').catch(() => ({}));
-      sppPath = await open({
-        filters: [{ name: 'Plant Simulation Model', extensions: ['spp'] }],
-        defaultPath: saved.plant_sim_path || undefined,
-        title: 'Выберите модель Plant Simulation (.spp)',
-        multiple: false,
-      });
-    } catch {
-      const saved = await invoke('get_settings').catch(() => ({}));
-      sppPath = prompt('Путь к файлу модели Plant Simulation (.spp):', saved.plant_sim_path || '');
-    }
+    // Шаг 2: выбрать .spp файл модели через нативный Windows-диалог
+    const saved = await invoke('get_settings').catch(() => ({}));
+    const sppPath = await invoke('pick_file', {
+      title: 'Выберите модель Plant Simulation (.spp)',
+      filter: 'Plant Simulation Model (*.spp)|*.spp|Все файлы (*.*)|*.*',
+      defaultPath: saved.plant_sim_path || '',
+    });
     if (!sppPath) return;
 
     // Сохранить выбранный путь в настройках
