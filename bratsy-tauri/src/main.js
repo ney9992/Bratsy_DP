@@ -48,8 +48,17 @@ async function runPlantSim() {
   showLogPanel(true);
 
   try {
-    // Шаг 1: найти ярлык
+    // Шаг 1: найти ярлык (из настроек или автопоиском)
     const lnkPath = await invoke('find_plantsim_shortcut');
+
+    // Запомнить найденный путь в настройках на будущее
+    try {
+      const s = await invoke('get_settings');
+      if (!s.plant_sim_shortcut) {
+        await invoke('save_settings', { settings: { ...s, plant_sim_shortcut: lnkPath } });
+        document.getElementById('inputPlantSimShortcut').value = lnkPath;
+      }
+    } catch { /* некритично */ }
 
     // Шаг 2: выбрать .spp файл модели
     let sppPath;
