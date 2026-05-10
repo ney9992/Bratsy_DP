@@ -3,8 +3,8 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 current_phase: Phase 3 — Интеграция Plant Simulation
-current_plan: complete
-status: milestone_complete
+current_plan: pending — работа с данными PlantSim
+status: in_progress
 last_updated: "2026-05-09T20:30:00.000Z"
 progress:
   total_phases: 3
