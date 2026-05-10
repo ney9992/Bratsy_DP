@@ -157,12 +157,6 @@ function updatePill(stage, status) {
     setCardStopIcon(card, false);
   }
 
-  // Скрыть лог-панель если все этапы остановлены
-  if (activeStages.size === 0 && (status === 'done' || status === 'error')) {
-    setTimeout(() => {
-      if (activeStages.size === 0) showLogPanel(false);
-    }, 3000);
-  }
 }
 
 function setCardStopIcon(card, isStop) {
