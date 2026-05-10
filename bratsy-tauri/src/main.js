@@ -187,6 +187,8 @@ function showLogPanel(visible) {
   }
 }
 
+document.getElementById('logClose')?.addEventListener('click', () => showLogPanel(false));
+
 function showResultsPanel(visible) {
   const panel = document.getElementById('resultsPanel');
   if (!panel) return;
