@@ -162,6 +162,77 @@ async fn run_stage(
     Ok(())
 }
 
+/// Открывает нативный диалог выбора файла (Windows OpenFileDialog через PowerShell).
+/// filter — строка вида "Plant Simulation (*.spp)|*.spp|All Files (*.*)|*.*"
+/// Возвращает выбранный путь или None если пользователь нажал Отмена.
+#[tauri::command]
+fn pick_file(title: String, filter: String, default_path: String) -> Option<String> {
+    let initial_dir = if default_path.is_empty() {
+        String::new()
+    } else {
+        std::path::Path::new(&default_path)
+            .parent()
+            .map(|p| p.to_string_lossy().into_owned())
+            .unwrap_or_default()
+    };
+
+    let script = format!(
+        r#"
+Add-Type -AssemblyName System.Windows.Forms
+$d = New-Object System.Windows.Forms.OpenFileDialog
+$d.Title = '{title}'
+$d.Filter = '{filter}'
+{dir_line}
+$d.Multiselect = $false
+if ($d.ShowDialog() -eq [System.Windows.Forms.DialogResult]::OK) {{ Write-Output $d.FileName }}
+"#,
+        title  = title.replace('\'', "''"),
+        filter = filter.replace('\'', "''"),
+        dir_line = if initial_dir.is_empty() {
+            String::new()
+        } else {
+            format!("$d.InitialDirectory = '{}'", initial_dir.replace('\'', "''"))
+        },
+    );
+
+    let output = Command::new("powershell")
+        .args(["-ExecutionPolicy", "Bypass", "-NonInteractive", "-Command", &script])
+        .output()
+        .ok()?;
+
+    let path = String::from_utf8_lossy(&output.stdout).trim().to_string();
+    if path.is_empty() { None } else { Some(path) }
+}
+
+/// Открывает нативный диалог выбора папки (Windows FolderBrowserDialog через PowerShell).
+#[tauri::command]
+fn pick_folder(title: String, default_path: String) -> Option<String> {
+    let script = format!(
+        r#"
+Add-Type -AssemblyName System.Windows.Forms
+$d = New-Object System.Windows.Forms.FolderBrowserDialog
+$d.Description = '{title}'
+$d.UseDescriptionForTitle = $true
+{dir_line}
+if ($d.ShowDialog() -eq [System.Windows.Forms.DialogResult]::OK) {{ Write-Output $d.SelectedPath }}
+"#,
+        title    = title.replace('\'', "''"),
+        dir_line = if default_path.is_empty() {
+            String::new()
+        } else {
+            format!("$d.SelectedPath = '{}'", default_path.replace('\'', "''"))
+        },
+    );
+
+    let output = Command::new("powershell")
+        .args(["-ExecutionPolicy", "Bypass", "-NonInteractive", "-Command", &script])
+        .output()
+        .ok()?;
+
+    let path = String::from_utf8_lossy(&output.stdout).trim().to_string();
+    if path.is_empty() { None } else { Some(path) }
+}
+
 /// Возвращает путь к .lnk-ярлыку Plant Simulation.
 /// Порядок: 1) из настроек, 2) автопоиск по нескольким директориям.
 #[tauri::command]
