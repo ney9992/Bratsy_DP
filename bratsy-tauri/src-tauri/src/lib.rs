@@ -388,7 +388,9 @@ async fn run_plantsim(
             Err(_) => false,
         };
 
+        // WR-03: показываем результаты только при успешном завершении
         let results_path = std::path::Path::new(&work_dir).join("results.txt");
+        if !status_ok { return; }
         match std::fs::read_to_string(&results_path) {
             Ok(content) => {
                 let mut load = 0f32;
