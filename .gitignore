@@ -1,2 +1,20 @@
+# Build artifacts
 Bratsy.exe
+bratsy-tauri/src-tauri/target/
+
+# Runtime / generated
+results.txt
+bratsy-tauri/results.txt
 test_*.txt
+
+# Machine-specific
+*.lnk
+settings.json
+.claude/settings.local.json
+
+# Node
+bratsy-tauri/node_modules/
+
+# Accidental paths
+C pользователей/
+e:*/

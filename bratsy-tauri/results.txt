@@ -1,3 +1,0 @@
-﻿load=87.3
-throughput=42
-cycle_time=18.5
