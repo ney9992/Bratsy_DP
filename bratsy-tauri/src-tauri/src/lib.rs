@@ -68,24 +68,10 @@ async fn run_stage(
     state: tauri::State<'_, ProcessMap>,
     app_handle: tauri::AppHandle,
 ) -> Result<(), String> {
-    // T-02-01: allowlist — stage ID должен быть из фиксированного набора
-    let allowed = ["autocad", "pdm", "excel", "plantsim", "report"];
+    // T-02-01: allowlist — plantsim использует отдельную команду run_plantsim
+    let allowed = ["autocad", "pdm", "excel", "report"];
     if !allowed.contains(&stage.as_str()) {
         return Err("invalid stage".into());
-    }
-
-    // D-13: валидация путей для plantsim ДО резервирования sentinel (Pitfall #2 prevention)
-    if stage == "plantsim" {
-        let settings = get_settings(); // sync fn — безопасно в async контексте (Pitfall #1)
-        if !std::path::Path::new(&settings.plant_sim_exe).exists() {
-            return Err("config: PlantSimulation.exe не найден. Проверьте путь в настройках.".into());
-        }
-        if !std::path::Path::new(&settings.plant_sim_path).exists() {
-            return Err("config: файл .spp не найден. Проверьте путь в настройках.".into());
-        }
-        if !std::path::Path::new(&settings.plant_sim_macro).exists() {
-            return Err("config: файл .spm макроса не найден. Проверьте путь в настройках.".into());
-        }
     }
 
     // T-02-02 (CR-02 fix): check + reserve в одном критическом разделе — предотвращает TOCTOU
