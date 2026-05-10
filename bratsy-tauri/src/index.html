@@ -201,6 +201,15 @@
       <div class="settings-section-label">ПУТИ К ФАЙЛАМ</div>
 
       <div class="field-group">
+        <label class="field-label">Ярлык Plant Simulation (.lnk)</label>
+        <div class="field-row">
+          <input class="field-input" id="inputPlantSimShortcut" type="text" readonly placeholder="Автопоиск — задайте вручную если не найден">
+          <button class="browse-btn" data-target="inputPlantSimShortcut" data-type="file">…</button>
+        </div>
+        <div class="field-error" id="errPlantSimShortcut">Файл не найден</div>
+      </div>
+
+      <div class="field-group">
         <label class="field-label">Путь к файлу Plant Simulation (.spp)</label>
         <div class="field-row">
           <input class="field-input" id="inputPlantSim" type="text" readonly placeholder="Не задан">
