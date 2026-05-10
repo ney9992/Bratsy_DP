@@ -91,15 +91,16 @@ None
 
 ## Session Continuity
 
-**Last session:** 2026-05-10 — Phase 3 выполнена (PlantSim UI, ярлык, результаты), code review findings CR+WR закрыты. Milestone v1 НЕ закрыт — ждёт реальной работы с данными Plant Simulation.
+**Last session:** 2026-05-10 — Phase 3 выполнена + CR/WR fixes. Phase 4 research готов. Пауза.
 
-**Что осталось до закрытия v1:**
-- Отладка реального запуска PlantSim через ярлык на заводском ПК
-- Согласование формата results.txt с SimTalk-макросом (load/throughput/cycle_time)
-- Сквозной тест: запуск → симуляция → числа в UI
-- После успешного сквозного теста — milestone v1 можно закрывать
+**Что осталось до закрытия v1 (Phase 4):**
+- Тест Start-Process -Wait с .lnk на реальном заводском ПК
+- Тест CLI-синтаксиса (-f, /E) с реальным PlantSim
+- Тест чтения results.txt от реального SimTalk-макроса
+- Скорректировать run_plantsim если что-то не так
+- Сквозной тест: кнопка → PlantSim → числа в UI → milestone v1 закрыт
 
-**Next action:** обсудить Phase 4 — работа с входными/выходными данными Plant Simulation
+**Next action:** `/gsd-resume-work` — вернуться и запланировать Phase 4
 
 ---
-*Last updated: 2026-05-10 — v1 in progress, data I/O work pending*
+*Last updated: 2026-05-10 — сессия завершена, ждём тест на реальном PlantSim*
