@@ -257,23 +257,37 @@ fn find_plantsim_shortcut() -> Result<String, String> {
         }
     }
     if let Ok(exe) = std::env::current_exe() {
-        if let Some(dir) = exe.parent() {
-            scan_dirs.push(dir.to_path_buf());
-            // debug target/debug → поднимаемся до workspace root
-            for _ in 0..4 {
-                if let Some(p) = scan_dirs.last().cloned().and_then(|d| d.parent().map(|x| x.to_path_buf())) {
-                    scan_dirs.push(p);
+        // CR-03: поднимаемся максимум на 4 уровня, останавливаемся у корня диска
+        let mut dir = exe.parent().map(|p| p.to_path_buf());
+        for _ in 0..4 {
+            match dir {
+                None => break,
+                Some(ref d) => {
+                    scan_dirs.push(d.clone());
+                    // Корень диска: parent() == None или совпадает с текущим
+                    let parent = d.parent().map(|p| p.to_path_buf());
+                    if parent.as_deref() == Some(d.as_path()) {
+                        break;
+                    }
+                    dir = parent;
                 }
             }
         }
     }
 
+    // CR-02: возвращаем только .lnk с «Plant» или «Simulation» в имени
     for dir in &scan_dirs {
         if let Ok(entries) = std::fs::read_dir(dir) {
             for entry in entries.flatten() {
                 let path = entry.path();
                 if path.extension().and_then(|e| e.to_str()) == Some("lnk") {
-                    return Ok(path.to_string_lossy().into_owned());
+                    let name = path.file_name()
+                        .and_then(|n| n.to_str())
+                        .unwrap_or("")
+                        .to_lowercase();
+                    if name.contains("plant") || name.contains("simulation") || name.contains("цз") {
+                        return Ok(path.to_string_lossy().into_owned());
+                    }
                 }
             }
         }
