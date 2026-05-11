@@ -539,6 +539,15 @@ window.addEventListener('DOMContentLoaded', async () => {
     appendLog(stage, line);
   });
 
+  // Vault BOM — рендеринг дерева состава изделия
+  await listen('vault-bom', (event) => {
+    const { part_number, items } = event.payload;
+    document.getElementById('bomPartNumber').textContent = part_number;
+    document.getElementById('bomCount').textContent = `${items.length} поз.`;
+    renderBomTree(items);
+    showBomPanel(true);
+  });
+
   // D-12: панель результатов — появляется при получении stage-results
   await listen('stage-results', (event) => {
     const { stage, load, throughput, cycle_time } = event.payload;
