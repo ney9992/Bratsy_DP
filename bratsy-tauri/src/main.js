@@ -234,6 +234,8 @@ document.querySelectorAll('.stage-card').forEach(card => {
     if (activeStages.has(stage)) {
       try { await invoke('stop_stage', { stage }); }
       catch (e) { console.error('stop_stage error:', e); }
+    } else if (stage === 'pdm') {
+      await runVaultPdm();
     } else if (stage === 'plantsim') {
       await runPlantSim();
     } else {
