@@ -487,12 +487,19 @@ document.getElementById('btnSave').addEventListener('click', async () => {
   if (hasError) return;
 
   try {
+    const vaultUrl        = document.getElementById('inputVaultUrl').value;
+    const vaultToken      = document.getElementById('inputVaultToken').value;
+    const vaultPartNumber = document.getElementById('inputVaultPartNumber').value;
+
     await invoke('save_settings', {
       settings: {
         plant_sim_shortcut: plantSimShortcut,
         plant_sim_path:     plantSim,
         work_dir:           workDir,
         scripts_dir:        scripts,
+        vault_url:          vaultUrl,
+        vault_token:        vaultToken,
+        vault_part_number:  vaultPartNumber,
       }
     });
     closeSettings();
