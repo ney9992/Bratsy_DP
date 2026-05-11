@@ -708,6 +708,8 @@ pub fn run() {
             run_plantsim,
             pick_file,
             pick_folder,
+            vault_get_bom,
+            vault_download_file,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
