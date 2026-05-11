@@ -40,6 +40,135 @@ const STAGE_LABELS = {
   report:   'Report',
 };
 
+// ── Vault PDM ────────────────────────────────────────────────────
+
+const LIFECYCLE_LABELS = {
+  '-1': 'Новый', 1: 'Доработка', 2: 'Пров. BIM',
+  3: 'Пров. качества', 4: 'Пров. КО', 5: 'Утверждено', 6: 'Архив',
+};
+
+function showBomPanel(visible) {
+  const panel = document.getElementById('bomPanel');
+  if (!panel) return;
+  if (visible) panel.classList.add('visible');
+  else panel.classList.remove('visible');
+}
+
+document.getElementById('bomClose')?.addEventListener('click', () => showBomPanel(false));
+
+function renderBomTree(items) {
+  const tree = document.getElementById('bomTree');
+  if (!tree) return;
+  tree.innerHTML = '';
+
+  const byId = new Map(items.map(it => [it.Id, it]));
+  const children = new Map();
+  items.forEach(it => {
+    const pid = it.ParentId ?? null;
+    if (!children.has(pid)) children.set(pid, []);
+    children.get(pid).push(it);
+  });
+
+  function buildNode(item, depth) {
+    const kids = children.get(item.Id) || [];
+    const hasKids = kids.length > 0;
+    const isApproved = item.LfCycStateId === 5;
+    const stateLabel = LIFECYCLE_LABELS[item.LfCycStateId] ?? `Стадия ${item.LfCycStateId ?? '?'}`;
+
+    const filesHtml = (item.Files || []).map(f => {
+      const ext = f.FileName.split('.').pop().toUpperCase();
+      return `<button class="bom-file-btn" data-id="${f.Id}" data-name="${escapeHtml(f.FileName)}" title="${escapeHtml(f.FileName)}">${ext}</button>`;
+    }).join('');
+
+    const qtyText = item.Quant != null
+      ? `${item.Quant}&nbsp;${escapeHtml(item.Units || 'шт')}`
+      : '';
+
+    const node = document.createElement('div');
+    node.className = 'bom-node';
+
+    const row = document.createElement('div');
+    row.className = 'bom-row';
+    row.style.paddingLeft = `${8 + depth * 18}px`;
+    row.innerHTML = `
+      <span class="bom-chevron${hasKids ? '' : ' bom-chevron-leaf'}">▶</span>
+      <span class="bom-col-pn bom-pn">${escapeHtml(item.PartNumber)}</span>
+      <span class="bom-col-title bom-title">${escapeHtml(item.Title)}</span>
+      <span class="bom-col-qty bom-qty">${qtyText}</span>
+      <span class="bom-col-cat bom-cat">${escapeHtml(item.CatName || '')}</span>
+      <span class="bom-col-state bom-state${isApproved ? ' bom-state-ok' : ''}">${stateLabel}</span>
+      <span class="bom-col-files bom-files">${filesHtml}</span>`;
+
+    node.appendChild(row);
+
+    if (hasKids) {
+      const childWrap = document.createElement('div');
+      childWrap.className = 'bom-children';
+      kids.forEach(child => childWrap.appendChild(buildNode(child, depth + 1)));
+      node.appendChild(childWrap);
+
+      row.addEventListener('click', e => {
+        if (e.target.closest('.bom-file-btn')) return;
+        node.classList.toggle('collapsed');
+      });
+    }
+
+    return node;
+  }
+
+  const roots = children.get(null) || [];
+  roots.forEach(root => tree.appendChild(buildNode(root, 0)));
+}
+
+// Делегированный обработчик скачивания файлов из BOM
+document.addEventListener('click', async e => {
+  const btn = e.target.closest('.bom-file-btn');
+  if (!btn) return;
+  const fileId = parseInt(btn.dataset.id, 10);
+  const fileName = btn.dataset.name;
+  btn.disabled = true;
+  try {
+    const savedPath = await invoke('vault_download_file', { fileId, fileName });
+    showToast(`Сохранено: ${fileName}`, 'done');
+  } catch (err) {
+    showToast(`Ошибка скачивания: ${fileName}`, 'error');
+    console.error('vault_download_file:', err);
+  } finally {
+    btn.disabled = false;
+  }
+});
+
+async function runVaultPdm() {
+  totalAttempts++;
+  clearLog();
+  setLogTitle(STAGE_LABELS.pdm);
+  showLogPanel(true);
+  showBomPanel(false);
+
+  // Получить обозначение: из настроек или спросить
+  let partNumber;
+  try {
+    const s = await invoke('get_settings');
+    partNumber = s.vault_part_number || '';
+  } catch { partNumber = ''; }
+
+  if (!partNumber.trim()) {
+    partNumber = prompt('Введите обозначение изделия для запроса BOM:', 'МЧД-001');
+    if (!partNumber || !partNumber.trim()) return;
+    partNumber = partNumber.trim();
+  }
+
+  try {
+    await invoke('vault_get_bom', { partNumber });
+    lastSyncTime = Date.now();
+  } catch (e) {
+    failedAttempts++;
+    console.error('vault_get_bom error:', e);
+    updatePill('pdm', 'error');
+    showToast(STAGE_LABELS.pdm, 'error');
+  }
+}
+
 // ── Plant Simulation: диалоговый запуск через .lnk-ярлык ─────────
 async function runPlantSim() {
   totalAttempts++;
