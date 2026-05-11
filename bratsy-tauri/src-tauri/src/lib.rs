@@ -511,6 +511,189 @@ async fn stop_stage(
     Ok(())
 }
 
+// ── Vault PDM helpers ────────────────────────────────────────────
+
+fn mk_file(id: i64, name: String) -> VaultFile {
+    VaultFile {
+        file_name: name, id, master_id: id, ver_num: 1,
+        last_mod_date: "2025-03-15T09:00:00.000+03:00".into(),
+        link_type: "FileAttachment".into(),
+    }
+}
+
+fn mk_item(
+    parent_id: Option<i64>, id: i64, title: &str, part_number: String,
+    cat_name: &str, quant: Option<f64>, position_num: Option<i32>, units: &str,
+    rev_num: &str, ver_num: i32, mass: f64, files: Vec<VaultFile>,
+) -> VaultItem {
+    VaultItem {
+        parent_id, id, master_id: id,
+        title: title.into(), detail: None,
+        part_number,
+        rev_num: Some(rev_num.into()), ver_num: Some(ver_num),
+        cat_name: Some(cat_name.into()),
+        quant, position_num,
+        units: Some(units.into()),
+        lf_cyc_state_id: Some(5),
+        properties: vec![VaultProperty {
+            sys_name: "mass".into(),
+            disp_name: "Масса, кг".into(),
+            val: serde_json::json!(mass),
+        }],
+        files,
+    }
+}
+
+fn vault_mock_bom(part_number: &str) -> Vec<VaultItem> {
+    let pn = if part_number.trim().is_empty() { "МЧД-001" } else { part_number };
+    vec![
+        mk_item(None, 1001, &format!("Дом жилой модульный {}", pn), pn.into(),
+            "Сборка", None, None, "шт", "A", 3, 12500.0,
+            vec![mk_file(2001, format!("{}_сборка.pdf", pn))]),
+
+        mk_item(Some(1001), 1002, "Модуль 1 (жилая зона)", format!("{}-01", pn),
+            "Сборка", Some(1.0), Some(1), "шт", "A", 2, 4200.0,
+            vec![mk_file(2002, format!("{}-01.pdf", pn))]),
+
+        mk_item(Some(1002), 1003, "Панель стеновая несущая", format!("{}-01-001", pn),
+            "Деталь", Some(4.0), Some(1), "шт", "A", 1, 380.0,
+            vec![mk_file(2003, format!("{}-01-001.pdf", pn)),
+                 mk_file(2004, format!("{}-01-001.dxf", pn))]),
+
+        mk_item(Some(1002), 1004, "Профиль металлический 80×40", format!("{}-01-002", pn),
+            "Деталь", Some(12.0), Some(2), "м.п.", "A", 1, 4.2,
+            vec![mk_file(2005, format!("{}-01-002.pdf", pn))]),
+
+        mk_item(Some(1001), 1005, "Модуль 2 (санузел)", format!("{}-02", pn),
+            "Сборка", Some(1.0), Some(2), "шт", "A", 1, 1800.0,
+            vec![mk_file(2006, format!("{}-02.pdf", pn))]),
+
+        mk_item(Some(1005), 1006, "Перекрытие межмодульное", format!("{}-02-001", pn),
+            "Деталь", Some(2.0), Some(1), "шт", "B", 2, 650.0,
+            vec![mk_file(2007, format!("{}-02-001.pdf", pn)),
+                 mk_file(2008, format!("{}-02-001.dxf", pn))]),
+
+        mk_item(Some(1005), 1007, "Крепёж (комплект)", format!("{}-02-002", pn),
+            "Покупное", Some(1.0), Some(2), "компл.", "A", 1, 8.5,
+            vec![mk_file(2009, format!("{}-02-002.pdf", pn))]),
+    ]
+}
+
+/// Запрашивает BOM из Vault API (или возвращает mock если vault_url пустой).
+/// Эмитирует stage-status, stage-log, vault-bom.
+#[tauri::command]
+async fn vault_get_bom(
+    part_number: String,
+    app_handle: tauri::AppHandle,
+) -> Result<Vec<VaultItem>, String> {
+    let settings = get_settings();
+
+    let _ = app_handle.emit("stage-status", StageStatusPayload {
+        stage: "pdm".into(), status: "running".into(),
+    });
+    let _ = app_handle.emit("stage-log", StageLogPayload {
+        stage: "pdm".into(), line: format!("Запрос BOM: {}", part_number),
+    });
+
+    let items = if settings.vault_url.is_empty() || settings.vault_url.trim() == "mock" {
+        let _ = app_handle.emit("stage-log", StageLogPayload {
+            stage: "pdm".into(),
+            line: "[mock] Vault URL не задан — загружаю тестовые данные".into(),
+        });
+        vault_mock_bom(&part_number)
+    } else {
+        let base = settings.vault_url.trim_end_matches('/');
+        let _ = app_handle.emit("stage-log", StageLogPayload {
+            stage: "pdm".into(), line: format!("GET {}/api/v1/bom", base),
+        });
+
+        let client = reqwest::Client::builder()
+            .danger_accept_invalid_certs(true)
+            .build()
+            .map_err(|e| e.to_string())?;
+
+        let resp = client
+            .get(format!("{}/api/v1/bom", base))
+            .query(&[("partNumber", &part_number)])
+            .header("Authorization", format!("Bearer {}", settings.vault_token))
+            .send()
+            .await
+            .map_err(|e| format!("Ошибка подключения к Vault: {}", e))?;
+
+        if !resp.status().is_success() {
+            let code = resp.status().as_u16();
+            let body = resp.text().await.unwrap_or_default();
+            let _ = app_handle.emit("stage-status", StageStatusPayload {
+                stage: "pdm".into(), status: "error".into(),
+            });
+            return Err(format!("Vault API {}: {}", code, body.chars().take(200).collect::<String>()));
+        }
+
+        resp.json::<Vec<VaultItem>>()
+            .await
+            .map_err(|e| format!("Ошибка парсинга BOM: {}", e))?
+    };
+
+    let _ = app_handle.emit("stage-log", StageLogPayload {
+        stage: "pdm".into(), line: format!("Получено {} элементов", items.len()),
+    });
+    let _ = app_handle.emit("vault-bom", VaultBomPayload {
+        part_number: part_number.clone(),
+        items: items.clone(),
+    });
+    let _ = app_handle.emit("stage-status", StageStatusPayload {
+        stage: "pdm".into(), status: "done".into(),
+    });
+
+    Ok(items)
+}
+
+/// Скачивает файл из Vault и сохраняет в work_dir/vault/.
+#[tauri::command]
+async fn vault_download_file(
+    file_id: i64,
+    file_name: String,
+) -> Result<String, String> {
+    let settings = get_settings();
+
+    if settings.work_dir.is_empty() {
+        return Err("Рабочий каталог не задан — укажите в настройках".into());
+    }
+
+    let save_dir = std::path::Path::new(&settings.work_dir).join("vault");
+    std::fs::create_dir_all(&save_dir)
+        .map_err(|e| format!("Не удалось создать папку vault/: {}", e))?;
+
+    let save_path = save_dir.join(&file_name);
+
+    if settings.vault_url.is_empty() || settings.vault_url.trim() == "mock" {
+        std::fs::write(&save_path, b"[mock vault file]").map_err(|e| e.to_string())?;
+        return Ok(save_path.to_string_lossy().into_owned());
+    }
+
+    let client = reqwest::Client::builder()
+        .danger_accept_invalid_certs(true)
+        .build()
+        .map_err(|e| e.to_string())?;
+
+    let resp = client
+        .get(format!("{}/api/v1/file", settings.vault_url.trim_end_matches('/')))
+        .query(&[("id", file_id.to_string())])
+        .header("Authorization", format!("Bearer {}", settings.vault_token))
+        .send()
+        .await
+        .map_err(|e| format!("Ошибка подключения: {}", e))?;
+
+    if !resp.status().is_success() {
+        return Err(format!("Vault API {} при скачивании файла", resp.status().as_u16()));
+    }
+
+    let bytes = resp.bytes().await.map_err(|e| e.to_string())?;
+    std::fs::write(&save_path, &bytes).map_err(|e| e.to_string())?;
+
+    Ok(save_path.to_string_lossy().into_owned())
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
