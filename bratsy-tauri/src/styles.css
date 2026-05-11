@@ -593,3 +593,193 @@ body {
   color: var(--text-sec);
   margin-top: 2px;
 }
+
+/* ── BOM panel (Vault PDM) ───────────────────────────────────── */
+.bom-panel {
+  overflow: hidden;
+  max-height: 0;
+  opacity: 0;
+  transition: max-height 0.4s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.35s ease;
+  margin: 0 24px;
+  border-radius: 14px;
+  margin-bottom: 0;
+  border: 1.5px solid var(--border);
+  background: #fff;
+}
+.bom-panel.visible {
+  max-height: 420px;
+  opacity: 1;
+  margin-bottom: 12px;
+}
+
+.bom-panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 14px 7px;
+  background: var(--gray-light);
+  border-bottom: 1px solid var(--border);
+  border-radius: 13px 13px 0 0;
+}
+.bom-panel-title-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.bom-panel-label {
+  font-size: 10.5px;
+  font-weight: 600;
+  color: var(--text-sec);
+  letter-spacing: 0.5px;
+}
+.bom-part-number {
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--blue);
+  font-family: Menlo, Consolas, monospace;
+}
+.bom-count {
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--blue);
+  background: var(--blue-light);
+  padding: 1px 8px;
+  border-radius: 10px;
+}
+
+/* Заголовок столбцов */
+.bom-cols-header {
+  display: flex;
+  align-items: center;
+  padding: 4px 14px;
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--text-sec);
+  letter-spacing: 0.3px;
+  border-bottom: 1px solid var(--border);
+  background: var(--gray-light);
+  user-select: none;
+}
+
+/* Ширины колонок — одинаковые в заголовке и строках */
+.bom-col-pn    { width: 150px; flex-shrink: 0; }
+.bom-col-title { flex: 1; min-width: 0; }
+.bom-col-qty   { width: 72px; flex-shrink: 0; text-align: right; padding-right: 8px; }
+.bom-col-cat   { width: 72px; flex-shrink: 0; }
+.bom-col-state { width: 90px; flex-shrink: 0; }
+.bom-col-files { width: 110px; flex-shrink: 0; }
+
+/* Дерево */
+.bom-tree {
+  max-height: 320px;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(0,0,0,0.12) transparent;
+}
+.bom-tree::-webkit-scrollbar { width: 5px; }
+.bom-tree::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.12); border-radius: 3px; }
+
+.bom-node { display: block; }
+.bom-children { display: block; }
+.bom-node.collapsed > .bom-children { display: none; }
+
+.bom-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding-top: 4px;
+  padding-bottom: 4px;
+  padding-right: 14px;
+  border-bottom: 1px solid var(--border);
+  cursor: pointer;
+  transition: background 0.1s;
+  font-size: 12px;
+  min-height: 32px;
+}
+.bom-row:hover { background: var(--blue-light); }
+
+.bom-chevron {
+  width: 14px;
+  flex-shrink: 0;
+  font-size: 8px;
+  color: var(--text-sec);
+  text-align: center;
+  transition: transform 0.18s;
+  user-select: none;
+}
+.bom-node.collapsed .bom-chevron { transform: rotate(-90deg); }
+.bom-chevron-leaf { visibility: hidden; }
+
+.bom-pn {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--blue);
+  font-family: Menlo, Consolas, monospace;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.bom-title {
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.bom-qty {
+  font-size: 11.5px;
+  color: var(--text-sec);
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.bom-cat {
+  font-size: 11px;
+  color: var(--text-sec);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.bom-state {
+  font-size: 10.5px;
+  padding: 2px 6px;
+  border-radius: 7px;
+  background: var(--gray-light);
+  color: var(--text-sec);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-weight: 500;
+}
+.bom-state-ok {
+  background: var(--green-light);
+  color: var(--green);
+}
+
+.bom-files {
+  display: flex;
+  gap: 3px;
+  flex-wrap: wrap;
+}
+.bom-file-btn {
+  font-size: 9.5px;
+  font-weight: 700;
+  padding: 2px 5px;
+  border-radius: 5px;
+  border: 1px solid var(--border);
+  background: #fff;
+  color: var(--blue);
+  cursor: pointer;
+  font-family: inherit;
+  transition: background 0.1s, border-color 0.1s;
+  white-space: nowrap;
+  letter-spacing: 0.2px;
+}
+.bom-file-btn:hover:not(:disabled) {
+  background: var(--blue-light);
+  border-color: var(--blue);
+}
+.bom-file-btn:disabled { opacity: 0.5; cursor: default; }
+
+/* Editable inputs в settings (не readonly) */
+.field-input:not([readonly]) { cursor: text; }
