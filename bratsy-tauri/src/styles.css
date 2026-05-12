@@ -567,13 +567,13 @@ body {
 }
 
 .results-panel.visible {
-  max-height: 160px;
+  max-height: 280px;
   opacity: 1;
   margin-bottom: 12px;
 }
 
 .results-header {
-  padding: 8px 16px 6px;
+  padding: 8px 16px 4px;
   font-size: 11px;
   font-weight: 600;
   color: var(--text-sec);
@@ -583,9 +583,30 @@ body {
 
 .results-body {
   display: flex;
-  gap: 12px;
-  padding: 0 12px 12px;
+  gap: 10px;
+  padding: 0 12px 10px;
 }
+
+.results-body-sm {
+  padding-top: 0;
+}
+
+/* Широкая карточка (Bottleneck) занимает 2 доли */
+.metric-card-wide { flex: 2; }
+
+/* Название станции вместо числа */
+.metric-value-name {
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: 0;
+  margin-top: 6px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Красный акцент когда узкое место найдено */
+.metric-value-alert { color: var(--red); }
 
 /* .metric-unit — единицы измерения под числом в карточке */
 .metric-unit {
