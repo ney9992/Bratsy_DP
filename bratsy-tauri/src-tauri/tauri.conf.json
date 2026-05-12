@@ -33,7 +33,7 @@
       "icons/icon.ico"
     ],
     "resources": {
-      "../DP_Plant_Simulation.exe.lnk": "./"
+      "resources/DP_Plant_Simulation.exe.lnk": "./"
     },
     "windows": {
       "webviewInstallMode": { "type": "downloadBootstrapper" },
