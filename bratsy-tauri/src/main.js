@@ -549,11 +549,8 @@ window.addEventListener('DOMContentLoaded', async () => {
   try {
     const s = await invoke('get_settings');
     if (s.plant_sim_shortcut) document.getElementById('inputPlantSimShortcut').value = s.plant_sim_shortcut;
-    if (s.plant_sim_path)     document.getElementById('inputPlantSim').value          = s.plant_sim_path;
-    if (s.work_dir)           document.getElementById('inputWorkDir').value            = s.work_dir;
-    if (s.scripts_dir)        document.getElementById('inputScripts').value            = s.scripts_dir;
-    if (s.vault_url)          document.getElementById('inputVaultUrl').value           = s.vault_url;
-    if (s.vault_token)        document.getElementById('inputVaultToken').value         = s.vault_token;
-    if (s.vault_part_number)  document.getElementById('inputVaultPartNumber').value    = s.vault_part_number;
+    if (s.vault_url)          document.getElementById('inputVaultUrl').value          = s.vault_url;
+    if (s.vault_token)        document.getElementById('inputVaultToken').value        = s.vault_token;
+    if (s.vault_part_number)  document.getElementById('inputVaultPartNumber').value   = s.vault_part_number;
   } catch (e) { console.warn('Settings load:', e); }
 });
