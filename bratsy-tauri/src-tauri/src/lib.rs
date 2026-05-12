@@ -286,6 +286,19 @@ if ($d.ShowDialog() -eq [System.Windows.Forms.DialogResult]::OK) {{ Write-Output
     if path.is_empty() { None } else { Some(path) }
 }
 
+// Ярлык Plant Simulation встроен в бинарник — извлекается при первом запуске.
+const LNK_BYTES: &[u8] = include_bytes!("../resources/DP_Plant_Simulation.exe.lnk");
+const LNK_NAME: &str = "DP_Plant_Simulation.exe.lnk";
+
+/// Гарантирует наличие .lnk рядом с exe. Если нет — извлекает из бинарника.
+fn ensure_lnk() -> PathBuf {
+    let path = app_dir().join(LNK_NAME);
+    if !path.exists() {
+        let _ = std::fs::write(&path, LNK_BYTES);
+    }
+    path
+}
+
 /// Возвращает директорию исполняемого файла приложения.
 fn app_dir() -> PathBuf {
     std::env::current_exe()
