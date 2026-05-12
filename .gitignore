@@ -1,6 +1,7 @@
 # Build artifacts
 Bratsy.exe
 bratsy-tauri/src-tauri/target/
+release/
 
 # Runtime / generated
 results.txt
