@@ -555,14 +555,21 @@ window.addEventListener('DOMContentLoaded', async () => {
     showBomPanel(true);
   });
 
-  // D-12: панель результатов — появляется при получении stage-results
+  // Панель результатов — появляется при получении stage-results
   await listen('stage-results', (event) => {
-    const { stage, load, throughput, cycle_time } = event.payload;
+    const { stage, load, throughput, cycle_time, oee, wip, lead_time, bottleneck } = event.payload;
     if (stage !== 'plantsim') return;
 
-    document.getElementById('resLoad').textContent = load.toFixed(1);
+    document.getElementById('resLoad').textContent       = load.toFixed(1);
     document.getElementById('resThroughput').textContent = throughput.toFixed(0);
-    document.getElementById('resCycleTime').textContent = cycle_time.toFixed(1);
+    document.getElementById('resCycleTime').textContent  = cycle_time.toFixed(1);
+    document.getElementById('resOee').textContent        = oee > 0 ? oee.toFixed(1) : '—';
+    document.getElementById('resWip').textContent        = wip > 0 ? wip.toFixed(0) : '—';
+    document.getElementById('resLeadTime').textContent   = lead_time > 0 ? lead_time.toFixed(1) : '—';
+
+    const bn = document.getElementById('resBottleneck');
+    bn.textContent = bottleneck ? bottleneck.replace(/_/g, ' ') : '—';
+    bn.classList.toggle('metric-value-alert', !!bottleneck);
 
     showResultsPanel(true);
   });
