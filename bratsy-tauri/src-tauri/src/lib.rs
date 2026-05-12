@@ -298,54 +298,72 @@ fn app_dir() -> PathBuf {
         .unwrap_or_else(|| PathBuf::from("."))
 }
 
-/// Возвращает записываемую директорию для рабочих файлов (.lnk, results.txt).
-/// Если exe в Program Files (нет прав на запись) — использует %APPDATA%\Digital Factory\.
+/// Возвращает записываемую директорию для .lnk и results.txt.
+/// Пробует: рядом с exe → %APPDATA%\Digital Factory\ → %LOCALAPPDATA%\Digital Factory\.
 fn writable_dir() -> PathBuf {
-    let exe_dir = app_dir();
-    let probe = exe_dir.join(".write_probe");
-    if std::fs::write(&probe, b"").is_ok() {
-        let _ = std::fs::remove_file(&probe);
-        return exe_dir;
+    let mut candidates = vec![app_dir()];
+    if let Ok(p) = std::env::var("APPDATA") {
+        candidates.push(PathBuf::from(p).join("Digital Factory"));
     }
-    // Program Files или другая защищённая директория — пишем в AppData
-    let appdata = std::env::var("APPDATA")
-        .map(|p| PathBuf::from(p).join("Digital Factory"))
-        .unwrap_or(exe_dir);
-    let _ = std::fs::create_dir_all(&appdata);
-    appdata
+    if let Ok(p) = std::env::var("LOCALAPPDATA") {
+        candidates.push(PathBuf::from(p).join("Digital Factory"));
+    }
+    for dir in &candidates {
+        let _ = std::fs::create_dir_all(dir);
+        let probe = dir.join(".write_probe");
+        if std::fs::write(&probe, b"").is_ok() {
+            let _ = std::fs::remove_file(&probe);
+            return dir.clone();
+        }
+    }
+    candidates.into_iter().next().unwrap_or_else(|| PathBuf::from("."))
 }
 
-/// Гарантирует наличие .lnk в записываемой директории. Если нет — извлекает из бинарника.
-fn ensure_lnk() -> PathBuf {
-    let path = writable_dir().join(LNK_NAME);
-    if !path.exists() {
-        let _ = std::fs::write(&path, LNK_BYTES);
+/// Извлекает встроенный .lnk в первую записываемую директорию.
+/// Возвращает путь к файлу или подробную ошибку с указанием пути и причины.
+fn ensure_lnk() -> Result<PathBuf, String> {
+    let mut candidates = vec![app_dir()];
+    if let Ok(p) = std::env::var("APPDATA") {
+        candidates.push(PathBuf::from(p).join("Digital Factory"));
     }
-    path
+    if let Ok(p) = std::env::var("LOCALAPPDATA") {
+        candidates.push(PathBuf::from(p).join("Digital Factory"));
+    }
+
+    // Если уже существует в одной из директорий — вернуть сразу
+    for dir in &candidates {
+        let path = dir.join(LNK_NAME);
+        if path.exists() {
+            return Ok(path);
+        }
+    }
+
+    // Записать в первую доступную
+    let mut last_err = String::from("нет доступных директорий для записи");
+    for dir in &candidates {
+        let _ = std::fs::create_dir_all(dir);
+        let path = dir.join(LNK_NAME);
+        match std::fs::write(&path, LNK_BYTES) {
+            Ok(_) => return Ok(path),
+            Err(e) => last_err = format!("{} — {}", dir.display(), e),
+        }
+    }
+    Err(last_err)
 }
 
 /// Возвращает путь к .lnk-ярлыку Plant Simulation.
-/// Ярлык встроен в бинарник и извлекается рядом с exe автоматически.
-/// Ручное переопределение через настройки всегда имеет приоритет.
+/// Ярлык встроен в бинарник и извлекается автоматически.
+/// Ручное переопределение через настройки имеет приоритет.
 #[tauri::command]
 fn find_plantsim_shortcut() -> Result<String, String> {
-    // 1. Ручное переопределение в настройках
     let saved = get_settings().plant_sim_shortcut;
     if !saved.is_empty() && std::path::Path::new(&saved).exists() {
         return Ok(saved);
     }
 
-    // 2. Извлечь из бинарника рядом с exe (продакшн и dev)
-    let lnk = ensure_lnk();
-    if lnk.exists() {
-        return Ok(lnk.to_string_lossy().into_owned());
-    }
-
-    Err(format!(
-        "config: Не удалось создать файл ярлыка {}. \
-         Укажите путь вручную в настройках.",
-        LNK_NAME
-    ))
+    ensure_lnk()
+        .map(|p| p.to_string_lossy().into_owned())
+        .map_err(|e| format!("config: Не удалось извлечь ярлык Plant Simulation.\n\nПодробности: {}\n\nУкажите путь к ярлыку вручную в настройках.", e))
 }
 
 /// Модифицирует .lnk-ярлык (путь к модели и метод), запускает Plant Simulation через него,
