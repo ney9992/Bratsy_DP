@@ -303,8 +303,10 @@ async function runPlantSim() {
       defaultPath: '',
     });
     if (!sppPath) return;
-    const method = prompt('Метод SimTalk:', '.UserObjects.printed');
+    const lastMethod = localStorage.getItem('lastSimMethod') || '.UserObjects.printed';
+    const method = prompt('Метод SimTalk:', lastMethod);
     if (!method?.trim()) return;
+    localStorage.setItem('lastSimMethod', method.trim());
     await invoke('run_plantsim', { lnkPath, sppPath, method: method.trim() });
     lastSyncTime = Date.now();
   } catch (e) {
