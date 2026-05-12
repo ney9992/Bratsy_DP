@@ -31,10 +31,18 @@ $workDir = if ($SppPath -and (Test-Path $SppPath)) {
 
 # Записать results.txt по контракту D-07 (key=value, UTF-8 без BOM)
 $resultsPath = Join-Path $workDir "results.txt"
-$content = "load=87.3`nthroughput=42`ncycle_time=18.5"
+$content = @"
+load=87.3
+throughput=42
+cycle_time=18.5
+oee=78.5
+wip=12
+lead_time=24.5
+bottleneck=Сварочная_станция
+"@.Trim()
 [System.IO.File]::WriteAllText($resultsPath, $content, [System.Text.Encoding]::UTF8)
 
 Write-Output "[mock-plantsim] Результаты записаны: $resultsPath"
-Write-Output "[mock-plantsim] Завершено. Коэффициент загрузки: 87.3%, пропускная способность: 42 ед./ч, время цикла: 18.5 сек."
+Write-Output "[mock-plantsim] Загрузка: 87.3% | Выпуск: 42 ед./ч | Цикл: 18.5 с | OEE: 78.5% | WIP: 12 | Lead time: 24.5 мин | Узкое место: Сварочная_станция"
 
 exit 0
