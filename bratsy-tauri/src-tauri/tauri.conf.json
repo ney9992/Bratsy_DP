@@ -35,8 +35,6 @@
     "windows": {
       "webviewInstallMode": { "type": "downloadBootstrapper" },
       "nsis": {
-        "displayLanguageSelector": false,
-        "languages": ["Russian"],
         "installMode": "perUser"
       }
     }
