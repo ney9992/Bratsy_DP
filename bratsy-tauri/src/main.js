@@ -292,21 +292,12 @@ async function runPlantSim() {
   clearLog(); setLogTitle(STAGE_LABELS.plantsim); showLogPanel(true);
   try {
     const lnkPath = await invoke('find_plantsim_shortcut');
-    try {
-      const s = await invoke('get_settings');
-      if (!s.plant_sim_shortcut) await invoke('save_settings', { settings: { ...s, plant_sim_shortcut: lnkPath } });
-    } catch {}
-    const saved = await invoke('get_settings').catch(() => ({}));
     const sppPath = await invoke('pick_file', {
       title: 'Выберите модель Plant Simulation (.spp)',
       filter: 'Plant Simulation Model (*.spp)|*.spp|Все файлы (*.*)|*.*',
-      defaultPath: saved.plant_sim_path || '',
+      defaultPath: '',
     });
     if (!sppPath) return;
-    try {
-      const s = await invoke('get_settings');
-      await invoke('save_settings', { settings: { ...s, plant_sim_path: sppPath } });
-    } catch {}
     const method = prompt('Метод SimTalk:', '.UserObjects.printed');
     if (!method?.trim()) return;
     await invoke('run_plantsim', { lnkPath, sppPath, method: method.trim() });
