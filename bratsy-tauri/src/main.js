@@ -566,17 +566,29 @@ window.addEventListener('DOMContentLoaded', async () => {
     const { stage, load, throughput, cycle_time, oee, wip, lead_time, bottleneck } = event.payload;
     if (stage !== 'plantsim') return;
 
-    document.getElementById('resLoad').textContent       = load.toFixed(1);
-    document.getElementById('resThroughput').textContent = throughput.toFixed(0);
-    document.getElementById('resCycleTime').textContent  = cycle_time.toFixed(1);
-    document.getElementById('resOee').textContent        = oee > 0 ? oee.toFixed(1) : '—';
-    document.getElementById('resWip').textContent        = wip > 0 ? wip.toFixed(0) : '—';
-    document.getElementById('resLeadTime').textContent   = lead_time > 0 ? lead_time.toFixed(1) : '—';
+    // Диагностика: всегда видно в логе если событие пришло
+    appendLog('plantsim', `📊 Результаты получены: загрузка=${load?.toFixed(1)}% выпуск=${throughput?.toFixed(0)} OEE=${oee?.toFixed(1)}%`);
 
-    const bn = document.getElementById('resBottleneck');
-    if (bn) {
-      bn.textContent = bottleneck ? bottleneck.replace(/_/g, ' ') : '—';
-      bn.classList.toggle('metric-value-alert', !!bottleneck);
+    const set = (id, val) => {
+      const el = document.getElementById(id);
+      if (el) el.textContent = val;
+    };
+
+    try {
+      set('resLoad',       (load      ?? 0).toFixed(1));
+      set('resThroughput', (throughput ?? 0).toFixed(0));
+      set('resCycleTime',  (cycle_time ?? 0).toFixed(1));
+      set('resOee',        oee  > 0 ? oee.toFixed(1)  : '—');
+      set('resWip',        wip  > 0 ? wip.toFixed(0)  : '—');
+      set('resLeadTime',   lead_time > 0 ? lead_time.toFixed(1) : '—');
+
+      const bn = document.getElementById('resBottleneck');
+      if (bn) {
+        bn.textContent = bottleneck ? bottleneck.replace(/_/g, ' ') : '—';
+        bn.classList.toggle('metric-value-alert', !!bottleneck);
+      }
+    } catch (e) {
+      console.error('stage-results DOM update error:', e);
     }
 
     showResultsPanel(true);
