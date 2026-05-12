@@ -460,24 +460,16 @@ document.querySelectorAll('.browse-btn').forEach(btn => {
 
 document.getElementById('btnSave').addEventListener('click', async () => {
   const ps  = document.getElementById('inputPlantSimShortcut').value;
-  const spp = document.getElementById('inputPlantSim').value;
-  const wd  = document.getElementById('inputWorkDir').value;
-  const sc  = document.getElementById('inputScripts').value;
   const vu  = document.getElementById('inputVaultUrl').value;
   const vt  = document.getElementById('inputVaultToken').value;
   const vpn = document.getElementById('inputVaultPartNumber').value;
 
-  let hasError = false;
-  [[spp,'inputPlantSim','errPlantSim'], [wd,'inputWorkDir','errWorkDir'], [sc,'inputScripts','errScripts']]
-    .forEach(([val, iid, eid]) => {
-      if (val.trim() === '') { showError(iid, eid); hasError = true; }
-      else clearError(iid);
-    });
-  if (hasError) return;
+  if (!ps.trim()) { showError('inputPlantSimShortcut', 'errPlantSimShortcut'); return; }
+  clearError('inputPlantSimShortcut');
 
   try {
     await invoke('save_settings', { settings: {
-      plant_sim_shortcut: ps, plant_sim_path: spp, work_dir: wd, scripts_dir: sc,
+      plant_sim_shortcut: ps,
       vault_url: vu, vault_token: vt, vault_part_number: vpn,
     }});
     closeSettings();
