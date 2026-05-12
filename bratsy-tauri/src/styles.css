@@ -223,6 +223,12 @@ body {
   border-color: var(--green);
   border-width: 2px;
 }
+.stage-card.card-disabled {
+  opacity: 0.42;
+  filter: grayscale(0.7);
+  pointer-events: none;
+  cursor: default;
+}
 
 .stage-icon-wrap {
   width: 64px; height: 64px;
