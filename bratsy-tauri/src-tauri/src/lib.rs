@@ -41,6 +41,10 @@ pub struct StageResultsPayload {
     pub load: f32,
     pub throughput: f32,
     pub cycle_time: f32,
+    pub oee: f32,           // OEE %
+    pub wip: f32,           // среднее незавершённое производство, ед.
+    pub lead_time: f32,     // среднее время выпуска изделия, мин
+    pub bottleneck: String, // название станции-узкого места
 }
 
 // ── Vault PDM types ──────────────────────────────────────────────
