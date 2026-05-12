@@ -113,13 +113,10 @@ body {
 
 .step-done {
   background: var(--gray-light);
-  opacity: 0.75;
+  border-color: var(--border) !important;
+  opacity: 0.72;
   pointer-events: none;
-}
-.step-done .step-body {
-  max-height: 0 !important;
-  padding: 0 !important;
-  overflow: hidden;
+  transition: opacity 0.4s ease, background 0.4s ease;
 }
 
 /* ── Step header ── */
