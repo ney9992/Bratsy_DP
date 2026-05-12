@@ -20,7 +20,7 @@ if ($LASTEXITCODE -ne 0) {
     exit 1
 }
 
-# ── 2. Find installer ────────────────────────────────────────────
+# ── 3. Find installer ────────────────────────────────────────────
 $bundleDir = ".\src-tauri\target\release\bundle\nsis"
 $setupFile = Get-ChildItem $bundleDir -Filter "*-setup.exe" | Select-Object -First 1
 if (-not $setupFile) {
