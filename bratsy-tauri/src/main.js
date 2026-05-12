@@ -1,5 +1,10 @@
 const { invoke } = window.__TAURI__.core;
 const { listen }  = window.__TAURI__.event;
+const { getVersion } = window.__TAURI__.app;
+getVersion().then(v => {
+  const el = document.getElementById('appVersion');
+  if (el) el.textContent = 'v' + v;
+});
 
 // ── Uptime / Error rate ───────────────────────────────────────
 const startTime = Date.now();
