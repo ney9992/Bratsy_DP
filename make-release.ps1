@@ -70,12 +70,21 @@ $zipPath = "$releaseDir\$zipName"
 
 Compress-Archive -Path $outFolder -DestinationPath $zipPath -Force
 
-# ── 5. Итог ──────────────────────────────────────────────────────
+# ── 5. Архив исходников (git archive — без target/ и node_modules/) ──
+Set-Location $PSScriptRoot
+$srcZip = "$releaseDir\Digital_Factory_v${version}_source.zip"
+git archive HEAD --format=zip --output="$srcZip"
+if ($LASTEXITCODE -eq 0) {
+    $srcMB = [math]::Round((Get-Item $srcZip).Length / 1MB, 1)
+    Write-Host "==> Исходники: $srcZip ($srcMB МБ)" -ForegroundColor Green
+}
+
+# ── 6. Итог ──────────────────────────────────────────────────────
 $sizeMB = [math]::Round((Get-Item $zipPath).Length / 1MB, 1)
 Write-Host ""
-Write-Host "==> Готово: $zipPath ($sizeMB МБ)" -ForegroundColor Green
+Write-Host "==> Установщик: $zipPath ($sizeMB МБ)" -ForegroundColor Green
 Write-Host ""
-Write-Host "Содержимое архива:" -ForegroundColor Yellow
+Write-Host "Содержимое архива установщика:" -ForegroundColor Yellow
 Write-Host "  $zipName"
 Write-Host "  └── $folderName\"
 Write-Host "      ├── setup.exe"
