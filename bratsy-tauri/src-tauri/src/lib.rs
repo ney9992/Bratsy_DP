@@ -317,41 +317,6 @@ fn writable_dir() -> PathBuf {
     candidates.into_iter().next().unwrap_or_else(|| PathBuf::from("."))
 }
 
-/// Создаёт ярлык Plant Simulation через PowerShell в указанной директории.
-/// Target по умолчанию — стандартный путь Siemens.
-fn create_lnk(dir: &PathBuf) -> Result<PathBuf, String> {
-    let _ = std::fs::create_dir_all(dir);
-    let lnk_path = dir.join(LNK_NAME);
-    let lnk_str  = lnk_path.to_string_lossy().replace('"', "`\"");
-    let cmd = format!(
-        r#"$s=(New-Object -ComObject WScript.Shell).CreateShortcut("{lnk}");$s.TargetPath="{target}";$s.WorkingDirectory="{work}";$s.Save()"#,
-        lnk    = lnk_str,
-        target = PLANTSIM_DEFAULT_TARGET,
-        work   = PLANTSIM_DEFAULT_WORKDIR,
-    );
-    Command::new("powershell")
-        .args(["-ExecutionPolicy", "Bypass", "-NonInteractive", "-Command", &cmd])
-        .output()
-        .map_err(|e| format!("PowerShell недоступен: {}", e))?;
-
-    if lnk_path.exists() {
-        Ok(lnk_path)
-    } else {
-        Err(format!("Ярлык не создан в {}", dir.display()))
-    }
-}
-
-/// Гарантирует наличие ярлыка Plant Simulation в записываемой директории.
-/// Если ярлык не существует — создаёт через PowerShell.
-fn ensure_lnk() -> Result<PathBuf, String> {
-    let dir = writable_dir();
-    let lnk_path = dir.join(LNK_NAME);
-    if lnk_path.exists() {
-        return Ok(lnk_path);
-    }
-    create_lnk(&dir)
-}
-
 /// Возвращает путь к ярлыку Plant Simulation из настроек.
 /// Если не задан — просит пользователя указать его в настройках.
 #[tauri::command]
