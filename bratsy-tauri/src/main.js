@@ -1,563 +1,377 @@
 const { invoke } = window.__TAURI__.core;
 const { listen }  = window.__TAURI__.event;
 const { getVersion } = window.__TAURI__.app;
+
+// ── Версия в заголовке ─────────────────────────────────────────
 getVersion().then(v => {
   const el = document.getElementById('appVersion');
   if (el) el.textContent = 'v' + v;
 });
 
-// ── Uptime / Error rate ───────────────────────────────────────
-const startTime = Date.now();
-let totalAttempts = 0;
+// ── Метаданные этапов ──────────────────────────────────────────
+const PIPELINE = ['pdm', 'excel', 'autocad', 'plantsim'];
+const STAGE_LABELS = {
+  pdm: 'Vault PDM', excel: 'Excel', autocad: 'AutoCAD', plantsim: 'Tecnomatix',
+};
+
+// ── Uptime / статус ────────────────────────────────────────────
 let failedAttempts = 0;
-let lastSyncTime = Date.now();
+const startMs = Date.now();
 
 setInterval(() => {
-  const secs = Math.floor((Date.now() - startTime) / 1000);
-  const h = String(Math.floor(secs / 3600)).padStart(2, '0');
-  const m = String(Math.floor((secs % 3600) / 60)).padStart(2, '0');
-  const s = String(secs % 60).padStart(2, '0');
-  document.getElementById('uptime').textContent = `${h}:${m}:${s}`;
-
-  const elapsed = Math.floor((Date.now() - lastSyncTime) / 1000);
-  const syncEl = document.getElementById('syncTime');
-  if (elapsed < 60) syncEl.textContent = `${elapsed}s ago`;
-  else if (elapsed < 3600) syncEl.textContent = `${Math.floor(elapsed / 60)}m ago`;
-  else syncEl.textContent = `${(elapsed / 3600).toFixed(1)}h ago`;
-
-  if (totalAttempts > 0) {
-    document.getElementById('errorRate').textContent =
-      `${((failedAttempts / totalAttempts) * 100).toFixed(1)}%`;
-  }
+  const s = Math.floor((Date.now() - startMs) / 1000);
+  document.getElementById('uptimeEl').textContent =
+    `${String(Math.floor(s / 60)).padStart(2, '0')}:${String(s % 60).padStart(2, '0')}`;
 }, 1000);
 
-// ── Step state machine ────────────────────────────────────────
-const IMPORT_STAGES = new Set(['pdm', 'excel', 'autocad']);
-const SIM_STAGES    = new Set(['plantsim']);
-const importDone    = new Set();
-const simDone       = new Set();
-
-function onStageCompleted(stage) {
-  if (IMPORT_STAGES.has(stage)) {
-    importDone.add(stage);
-    document.getElementById('tagImport').textContent = `${importDone.size} / 3 загружено`;
-    if (importDone.size === IMPORT_STAGES.size) activateSimStep();
-  } else if (SIM_STAGES.has(stage)) {
-    simDone.add(stage);
-    document.getElementById('tagSim').textContent = `${simDone.size} / 1 выполнено`;
-    if (simDone.size === SIM_STAGES.size) activateReportStep();
-  }
+function updateErrChip() {
+  const el = document.getElementById('errRate');
+  el.textContent = `${failedAttempts} ош.`;
+  el.classList.toggle('err', failedAttempts > 0);
 }
 
-function activateSimStep() {
-  // Шаг 1 → сделан
-  const s1 = document.getElementById('stepImport');
-  s1.classList.remove('step-active');
-  s1.classList.add('step-done');
-  document.getElementById('num1').textContent = '✓';
-  document.getElementById('num1').classList.add('step-num-done');
-  document.getElementById('tagImport').textContent = '✓ Завершено';
-  document.getElementById('tagImport').classList.add('step-tag-done');
+// ── Консоль ────────────────────────────────────────────────────
+const consoleBody = document.getElementById('consoleBody');
 
-  // Шаг 2 → активен
-  const s2 = document.getElementById('stepSim');
-  s2.classList.remove('step-locked');
-  s2.classList.add('step-active');
-  document.getElementById('num2').classList.remove('step-num-locked');
-  document.getElementById('tagSim').textContent = '0 / 2 выполнено';
-  document.getElementById('tagSim').classList.remove('step-tag-locked');
-
-  // Переключить лог на шаг 2
-  activeLogId = 2;
-
-  document.getElementById('footerInfo').textContent = 'Шаг 2 из 3 — симуляция производства';
-  showToast('Импорт завершён', 'done');
+function ts() {
+  const n = new Date();
+  return `${String(n.getHours()).padStart(2,'0')}:${String(n.getMinutes()).padStart(2,'0')}:${String(n.getSeconds()).padStart(2,'0')}`;
 }
 
-function activateReportStep() {
-  // Шаг 2 → сделан
-  const s2 = document.getElementById('stepSim');
-  s2.classList.remove('step-active');
-  s2.classList.add('step-done');
-  document.getElementById('num2').textContent = '✓';
-  document.getElementById('num2').classList.add('step-num-done');
-  document.getElementById('tagSim').textContent = '✓ Завершено';
-  document.getElementById('tagSim').classList.add('step-tag-done');
-
-  // Шаг 3 → активен
-  const s3 = document.getElementById('stepReport');
-  s3.classList.remove('step-locked');
-  s3.classList.add('step-active');
-  document.getElementById('num3').classList.remove('step-num-locked');
-
-  const ts = new Date().toLocaleString('ru-RU', { day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit' });
-  document.getElementById('reportTs').textContent = `Рассчитано: ${ts}`;
-  document.getElementById('footerInfo').textContent = 'Шаг 3 из 3 — результаты расчёта';
-
-  // Прокрутить к отчёту
-  setTimeout(() => {
-    document.getElementById('stepReport').scrollIntoView({ behavior: 'smooth', block: 'start' });
-  }, 300);
-
-  showToast('Симуляция завершена', 'done');
+function esc(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
 }
 
-function resetPipeline() {
-  importDone.clear();
-  simDone.clear();
-
-  // Шаг 1 → снова активен
-  const s1 = document.getElementById('stepImport');
-  s1.className = 'step step-active';
-  document.getElementById('num1').textContent = '1';
-  document.getElementById('num1').className = 'step-num';
-  document.getElementById('tagImport').textContent = '0 / 3 загружено';
-  document.getElementById('tagImport').className = 'step-tag';
-
-  // Шаг 2 → заблокирован
-  const s2 = document.getElementById('stepSim');
-  s2.className = 'step step-locked';
-  document.getElementById('num2').textContent = '2';
-  document.getElementById('num2').className = 'step-num step-num-locked';
-  document.getElementById('tagSim').textContent = 'Ожидает импорта';
-  document.getElementById('tagSim').className = 'step-tag step-tag-locked';
-
-  // Шаг 3 → заблокирован
-  const s3 = document.getElementById('stepReport');
-  s3.className = 'step step-locked step-report';
-  document.getElementById('num3').textContent = '3';
-  document.getElementById('num3').className = 'step-num step-num-report';
-
-  // Сброс pill-ов всех карточек
-  document.querySelectorAll('.stage-card').forEach(c => {
-    const stage = c.dataset.stage;
-    const inSim = SIM_STAGES.has(stage);
-    updatePill(stage, inSim ? 'idle' : 'waiting');
-    c.classList.remove('stage-running', 'stage-finished');
-    const wrap = c.querySelector('.stage-icon-wrap');
-    if (wrap?.dataset.origHtml) { wrap.innerHTML = wrap.dataset.origHtml; delete wrap.dataset.origHtml; }
-  });
-
-  // Сброс отчёта
-  ['rptLoad','rptThroughput','rptCycleTime','rptOee','rptWip','rptLeadTime','rptBottleneck']
-    .forEach(id => { const el = document.getElementById(id); if (el) el.textContent = '—'; });
-
-  activeStages.clear();
-  activeLogId = 1;
-  document.getElementById('footerInfo').textContent = 'Шаг 1 из 3 — импорт данных';
-  // Спрятать обе лог-панели и BOM
-  [1, 2].forEach(id => {
-    document.getElementById(`logPanel${id}`)?.classList.remove('visible');
-    logLines[id] = [];
-    const b = document.getElementById(`logBody${id}`);
-    if (b) b.innerHTML = '';
-  });
-  showBomPanel(false);
+function clog(text, type = 'log', stage = null) {
+  const line = document.createElement('span');
+  line.className = `cline cline-${type}`;
+  let html = `<span class="ts">${ts()}</span>`;
+  if (stage) html += `<span class="tag tag-${stage}">${esc(STAGE_LABELS[stage] || stage)}</span>`;
+  html += esc(text);
+  line.innerHTML = html;
+  consoleBody.appendChild(line);
+  consoleBody.scrollTop = consoleBody.scrollHeight;
 }
 
-document.getElementById('btnNewRun')?.addEventListener('click', resetPipeline);
+function csep() {
+  const el = document.createElement('span');
+  el.className = 'cline cline-sep';
+  consoleBody.appendChild(el);
+  consoleBody.scrollTop = consoleBody.scrollHeight;
+}
 
-// ── Stage card click (toggle run/stop) ───────────────────────
-const activeStages = new Set();
-
-const STAGE_LABELS = {
-  pdm:               'Vault PDM',
-  excel:             'Excel',
-  autocad:           'AutoCAD',
-  plantsim:          'Tecnomatix',
-  visual_components: 'Visual Components',
-};
-
-document.querySelectorAll('.stage-card').forEach(card => {
-  card.addEventListener('click', async () => {
-    const stage = card.dataset.stage;
-    if (activeStages.has(stage)) {
-      try { await invoke('stop_stage', { stage }); }
-      catch (e) { console.error('stop_stage:', e); }
-      return;
-    }
-
-    if (stage === 'pdm') { await runVaultPdm(); return; }
-    if (stage === 'plantsim') { await runPlantSim(); return; }
-
-    // Общий run через mock
-    totalAttempts++;
-    clearLog();
-    setLogTitle(STAGE_LABELS[stage] || stage);
-    showLogPanel(true);
-    try {
-      await invoke('run_stage', { stage });
-      lastSyncTime = Date.now();
-    } catch (e) {
-      failedAttempts++;
-      updatePill(stage, 'error');
-      showToast(STAGE_LABELS[stage] || stage, 'error');
-    }
-  });
+document.getElementById('btnClearConsole').addEventListener('click', () => {
+  consoleBody.innerHTML = '';
+  clog('Консоль очищена.', 'sys');
 });
 
-// ── Vault PDM ────────────────────────────────────────────────
-const LIFECYCLE_LABELS = {
-  '-1': 'Новый', 1: 'Доработка', 2: 'Пров. BIM',
-  3: 'Пров. качества', 4: 'Пров. КО', 5: 'Утверждено', 6: 'Архив',
-};
-
-function showBomPanel(visible) {
-  const p = document.getElementById('bomPanel');
-  if (p) { if (visible) p.classList.add('visible'); else p.classList.remove('visible'); }
-}
-document.getElementById('bomClose')?.addEventListener('click', () => showBomPanel(false));
-
-function renderBomTree(items) {
-  const tree = document.getElementById('bomTree');
-  if (!tree) return;
-  tree.innerHTML = '';
-  const children = new Map();
-  items.forEach(it => {
-    const pid = it.ParentId ?? null;
-    if (!children.has(pid)) children.set(pid, []);
-    children.get(pid).push(it);
-  });
-
-  function buildNode(item, depth) {
-    const kids = children.get(item.Id) || [];
-    const hasKids = kids.length > 0;
-    const isOk = item.LfCycStateId === 5;
-    const stateLabel = LIFECYCLE_LABELS[item.LfCycStateId] ?? `#${item.LfCycStateId}`;
-    const filesHtml = (item.Files || []).map(f => {
-      const ext = f.FileName.split('.').pop().toUpperCase();
-      return `<button class="bom-file-btn" data-id="${f.Id}" data-name="${escapeHtml(f.FileName)}" title="${escapeHtml(f.FileName)}">${ext}</button>`;
-    }).join('');
-    const qtyText = item.Quant != null ? `${item.Quant}&nbsp;${escapeHtml(item.Units || 'шт')}` : '';
-    const node = document.createElement('div');
-    node.className = 'bom-node';
-    const row = document.createElement('div');
-    row.className = 'bom-row';
-    row.style.paddingLeft = `${8 + depth * 18}px`;
-    row.innerHTML = `
-      <span class="bom-chevron${hasKids ? '' : ' bom-chevron-leaf'}">▶</span>
-      <span class="bom-col-pn bom-pn">${escapeHtml(item.PartNumber)}</span>
-      <span class="bom-col-title bom-title">${escapeHtml(item.Title)}</span>
-      <span class="bom-col-qty bom-qty">${qtyText}</span>
-      <span class="bom-col-cat bom-cat">${escapeHtml(item.CatName || '')}</span>
-      <span class="bom-col-state bom-state${isOk ? ' bom-state-ok' : ''}">${stateLabel}</span>
-      <span class="bom-col-files bom-files">${filesHtml}</span>`;
-    node.appendChild(row);
-    if (hasKids) {
-      const childWrap = document.createElement('div');
-      childWrap.className = 'bom-children';
-      kids.forEach(c => childWrap.appendChild(buildNode(c, depth + 1)));
-      node.appendChild(childWrap);
-      row.addEventListener('click', e => {
-        if (e.target.closest('.bom-file-btn')) return;
-        node.classList.toggle('collapsed');
-      });
-    }
-    return node;
-  }
-  (children.get(null) || []).forEach(r => tree.appendChild(buildNode(r, 0)));
-}
-
-document.addEventListener('click', async e => {
-  const btn = e.target.closest('.bom-file-btn');
-  if (!btn) return;
-  btn.disabled = true;
-  try {
-    await invoke('vault_download_file', { fileId: parseInt(btn.dataset.id, 10), fileName: btn.dataset.name });
-    showToast(`Сохранено: ${btn.dataset.name}`, 'done');
-  } catch (err) {
-    showToast(`Ошибка: ${btn.dataset.name}`, 'error');
-  } finally { btn.disabled = false; }
+// ── Подписка на события Tauri ──────────────────────────────────
+listen('stage-log', (evt) => {
+  clog(evt.payload.line, 'log', evt.payload.stage);
 });
 
-async function runVaultPdm() {
-  totalAttempts++;
-  clearLog(); setLogTitle(STAGE_LABELS.pdm); showLogPanel(true);
-  showBomPanel(false);
-  let partNumber = '';
-  try { const s = await invoke('get_settings'); partNumber = s.vault_part_number || ''; } catch {}
-  if (!partNumber.trim()) {
-    partNumber = prompt('Введите обозначение изделия для запроса BOM:', 'МЧД-001');
-    if (!partNumber?.trim()) return;
-    partNumber = partNumber.trim();
-  }
-  try {
-    await invoke('vault_get_bom', { partNumber });
-    lastSyncTime = Date.now();
-  } catch (e) {
-    failedAttempts++;
-    updatePill('pdm', 'error');
-    showToast(STAGE_LABELS.pdm, 'error');
-  }
-}
+listen('stage-status', (evt) => {
+  const { stage, status } = evt.payload;
+  setPill(stage, status);
+  if (status === 'done')  clog('✓ Завершён', 'ok', stage);
+  if (status === 'error') clog('✗ Ошибка', 'err', stage);
+});
 
-// ── Plant Simulation ──────────────────────────────────────────
-async function runPlantSim() {
-  totalAttempts++;
-  clearLog(); setLogTitle(STAGE_LABELS.plantsim); showLogPanel(true);
-  try {
-    const lnkPath = await invoke('find_plantsim_shortcut');
-    const sppPath = await invoke('pick_file', {
-      title: 'Выберите модель Plant Simulation (.spp)',
-      filter: 'Plant Simulation Model (*.spp)|*.spp|Все файлы (*.*)|*.*',
-      defaultPath: '',
-    });
-    if (!sppPath) return;
-    const lastMethod = localStorage.getItem('lastSimMethod') || '.UserObjects.printed';
-    const method = prompt('Метод SimTalk:', lastMethod);
-    if (!method?.trim()) return;
-    localStorage.setItem('lastSimMethod', method.trim());
-    await invoke('run_plantsim', { lnkPath, sppPath, method: method.trim() });
-    lastSyncTime = Date.now();
-  } catch (e) {
-    if (typeof e === 'string' && e.startsWith('config:')) {
-      const go = confirm(`Ошибка: ${e.replace('config: ', '')}\n\nОткрыть настройки?`);
-      if (go) openSettings();
-    } else {
-      failedAttempts++;
-      updatePill('plantsim', 'error');
-      showToast(STAGE_LABELS.plantsim, 'error');
-    }
-  }
-}
+listen('stage-results', (evt) => {
+  const v = evt.payload;
+  csep();
+  clog('══ РЕЗУЛЬТАТЫ СИМУЛЯЦИИ ══════════════', 'header');
+  clog(`Загрузка:      ${v.load}%`,           'result');
+  clog(`Выпуск:        ${v.throughput} ед/ч`, 'result');
+  clog(`Цикл:          ${v.cycle_time} с`,    'result');
+  clog(`OEE:           ${v.oee}%`,            'result');
+  clog(`WIP:           ${v.wip} ед.`,         'result');
+  clog(`Lead time:     ${v.lead_time} мин`,   'result');
+  clog(`Узкое место:   ${v.bottleneck}`,      'result');
+  csep();
+});
 
-// ── Pill & card state ─────────────────────────────────────────
-const PILL_MAP = {
-  waiting: { cls: 'pill-ready',   dot: 'dot-green', text: 'Ready' },
-  idle:    { cls: 'pill-idle',    dot: 'dot-gray',  text: 'Ожидание' },
-  running: { cls: 'pill-running', dot: 'dot-blue',  text: 'Запущен' },
-  done:    { cls: 'pill-done',    dot: 'dot-green', text: 'Завершён' },
-  error:   { cls: 'pill-error',   dot: 'dot-red',   text: 'Ошибка' },
-};
+listen('vault-bom', (evt) => {
+  clog(`BOM: ${evt.payload.part_number} — ${evt.payload.items.length} поз.`, 'ok', 'pdm');
+});
 
-function updatePill(stage, status) {
-  const card = document.querySelector(`.stage-card[data-stage="${stage}"]`);
-  if (!card) return;
-  const pill = card.querySelector('.stage-pill');
+// ── Пилюли статуса ─────────────────────────────────────────────
+function setPill(stage, status) {
+  const pill = document.getElementById(`pill-${stage}`);
   if (!pill) return;
-  const cfg = PILL_MAP[status] || PILL_MAP.waiting;
-  pill.className = `stage-pill ${cfg.cls}`;
-  pill.innerHTML = `<span class="dot ${cfg.dot}"></span>${cfg.text}`;
-  if (status === 'running') {
-    card.classList.add('stage-running');
-    card.classList.remove('stage-finished');
-    activeStages.add(stage);
-    setCardStopIcon(card, true);
+  const MAP = {
+    idle:    ['pill-idle',    'Ожидание'],
+    running: ['pill-running', 'Запущен'],
+    done:    ['pill-done',    'Завершён'],
+    error:   ['pill-error',   'Ошибка'],
+  };
+  const [cls, label] = MAP[status] || MAP.idle;
+  pill.className = `stage-pill ${cls}`;
+  pill.innerHTML = `<span class="dot"></span>${label}`;
+  const row = pill.closest('.stage-row');
+  if (row) {
+    row.classList.remove('running', 'done', 'error');
+    if (status !== 'idle') row.classList.add(status);
+  }
+}
+
+function resetPills() {
+  PIPELINE.forEach(s => setPill(s, 'idle'));
+}
+
+// ── Переключатели тест / реал ──────────────────────────────────
+function getMode(stage) { return localStorage.getItem(`mode_${stage}`) || 'test'; }
+function setMode(stage, mode) { localStorage.setItem(`mode_${stage}`, mode); }
+
+document.querySelectorAll('.mode-toggle').forEach(toggle => {
+  const stage = toggle.dataset.stage;
+  const track = toggle.querySelector('.toggle-track');
+  const thumb = toggle.querySelector('.toggle-thumb');
+  const testLbl = toggle.querySelector('.test-lbl');
+  const realLbl = toggle.querySelector('.real-lbl');
+
+  applyToggle(track, thumb, testLbl, realLbl, getMode(stage) === 'real');
+
+  toggle.addEventListener('click', () => {
+    const nowReal = getMode(stage) !== 'real';
+    setMode(stage, nowReal ? 'real' : 'test');
+    applyToggle(track, thumb, testLbl, realLbl, nowReal);
+  });
+});
+
+function applyToggle(track, thumb, testLbl, realLbl, isReal) {
+  thumb.style.left = isReal ? '20px' : '2px';
+  track.classList.toggle('is-real', isReal);
+  testLbl.classList.toggle('active', !isReal);
+  realLbl.classList.toggle('active', isReal);
+}
+
+// ── Кнопка запуска ─────────────────────────────────────────────
+let pipelineRunning = false;
+
+const btnLaunch   = document.getElementById('btnLaunch');
+const launchText  = document.getElementById('launchText');
+const launchIcon  = document.getElementById('launchIcon');
+const launchStatus = document.getElementById('launchStatus');
+
+const ICON_PLAY = '<polygon points="5 3 19 12 5 21 5 3"/>';
+const ICON_STOP = '<rect x="5" y="4" width="5" height="16" rx="1"/><rect x="14" y="4" width="5" height="16" rx="1"/>';
+
+btnLaunch.addEventListener('click', () => {
+  if (pipelineRunning) stopPipeline();
+  else startPipeline();
+});
+
+function setLaunchState(state) {
+  btnLaunch.className = `launch-btn${state ? ' ' + state : ''}`;
+  if (state === 'running') {
+    launchIcon.innerHTML = ICON_STOP;
+    launchText.innerHTML = 'Остановить';
+    launchStatus.textContent = 'Пайплайн выполняется...';
+  } else if (state === 'done') {
+    launchIcon.innerHTML = ICON_PLAY;
+    launchText.innerHTML = 'Запуск<br>Цифрового завода';
+    launchStatus.textContent = 'Завершено успешно';
+  } else if (state === 'error') {
+    launchIcon.innerHTML = ICON_PLAY;
+    launchText.innerHTML = 'Запуск<br>Цифрового завода';
+    launchStatus.textContent = 'Ошибка — см. консоль';
   } else {
-    card.classList.remove('stage-running');
-    activeStages.delete(stage);
-    setCardStopIcon(card, false);
-    if (status === 'done') card.classList.add('stage-finished');
+    launchIcon.innerHTML = ICON_PLAY;
+    launchText.innerHTML = 'Запуск<br>Цифрового завода';
+    launchStatus.textContent = 'Готов к запуску';
   }
 }
 
-function setCardStopIcon(card, isStop) {
-  const wrap = card.querySelector('.stage-icon-wrap');
-  if (!wrap) return;
-  if (isStop) {
-    wrap.dataset.origHtml = wrap.innerHTML;
-    wrap.innerHTML = `<svg width="28" height="28" viewBox="0 0 24 24" fill="#C0392B"><rect x="4" y="4" width="16" height="16" rx="3"/></svg>`;
-  } else if (wrap.dataset.origHtml) {
-    wrap.innerHTML = wrap.dataset.origHtml;
-    delete wrap.dataset.origHtml;
+// ── Запуск пайплайна ───────────────────────────────────────────
+async function startPipeline() {
+  pipelineRunning = true;
+  setLaunchState('running');
+  resetPills();
+  csep();
+  clog('▶ Запуск пайплайна', 'header');
+
+  let success = true;
+  for (const stage of PIPELINE) {
+    if (!pipelineRunning) { success = false; break; }
+    const mode = getMode(stage);
+    clog(`Этап: ${STAGE_LABELS[stage]} [${mode === 'real' ? 'реальный' : 'тест'}]`, 'sys');
+    setPill(stage, 'running');
+
+    try {
+      if (mode === 'test') await runTest(stage);
+      else await runReal(stage);
+      setPill(stage, 'done');
+    } catch (e) {
+      setPill(stage, 'error');
+      clog(String(e.message || e), 'err', stage);
+      failedAttempts++;
+      updateErrChip();
+      success = false;
+      break;
+    }
+  }
+
+  pipelineRunning = false;
+  document.getElementById('syncStatus').textContent = '● Синхр.';
+
+  if (success) {
+    setLaunchState('done');
+    clog('✓ Пайплайн завершён', 'ok');
+    setTimeout(() => setLaunchState(''), 5000);
+  } else {
+    setLaunchState('error');
+    setTimeout(() => setLaunchState(''), 5000);
   }
 }
 
-// ── Log panel (двойная: logPanel1 для шага 1, logPanel2 для шага 2) ──
-const LOG_MAX = 200;
-const logLines = { 1: [], 2: [] };
-let activeLogId = 1; // текущая активная панель
-
-function logPanelEl() { return document.getElementById(`logPanel${activeLogId}`); }
-function logBodyEl()  { return document.getElementById(`logBody${activeLogId}`); }
-function logTitleEl() { return document.getElementById(`logTitle${activeLogId}`); }
-
-function showLogPanel(v) {
-  const p = logPanelEl();
-  if (p) { if (v) p.classList.add('visible'); else p.classList.remove('visible'); }
+function stopPipeline() {
+  pipelineRunning = false;
+  clog('⏹ Остановлено пользователем', 'warn');
+  PIPELINE.forEach(s => {
+    const p = document.getElementById(`pill-${s}`);
+    if (p?.classList.contains('pill-running')) setPill(s, 'idle');
+  });
+  PIPELINE.forEach(s => invoke('stop_stage', { stage: s }).catch(() => {}));
 }
-document.getElementById('logClose1')?.addEventListener('click', () => {
-  activeLogId = 1; showLogPanel(false);
-});
-document.getElementById('logClose2')?.addEventListener('click', () => {
-  activeLogId = 2; showLogPanel(false);
-});
 
-function setLogTitle(t) {
-  const el = logTitleEl();
-  if (el) el.textContent = `● ${t} — лог`;
-}
-function clearLog() {
-  logLines[activeLogId] = [];
-  const b = logBodyEl();
-  if (b) b.innerHTML = '';
-}
-function appendLog(stage, line) {
-  const body = logBodyEl();
-  if (!body) return;
-  const now = new Date();
-  const ts = [now.getHours(), now.getMinutes(), now.getSeconds()]
-    .map(n => String(n).padStart(2, '0')).join(':');
-  logLines[activeLogId].push(line);
-  if (logLines[activeLogId].length > LOG_MAX) {
-    logLines[activeLogId].shift(); body.firstChild?.remove();
+// ── Тестовый режим: чистый JS-мок ─────────────────────────────
+function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+async function runTest(stage) {
+  for (let i = 1; i <= 3; i++) {
+    if (!pipelineRunning) throw new Error('Остановлено');
+    clog(`шаг ${i}/3`, 'log', stage);
+    await sleep(500);
   }
-  const row = document.createElement('div');
-  row.className = 'log-line';
-  row.innerHTML = `<span class="log-ts">${ts}</span><span class="log-text">${escapeHtml(line)}</span>`;
-  body.appendChild(row);
-  body.scrollTop = body.scrollHeight;
 }
 
-function escapeHtml(str) {
-  return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+// ── Рабочий режим: реальные команды ───────────────────────────
+function waitForStage(stage) {
+  return new Promise(async (resolve, reject) => {
+    const check = setInterval(() => {
+      if (!pipelineRunning) { clearInterval(check); reject(new Error('Остановлено')); }
+    }, 300);
+
+    const unlisten = await listen('stage-status', (evt) => {
+      if (evt.payload.stage !== stage) return;
+      const s = evt.payload.status;
+      if (s === 'done' || s === 'error') {
+        clearInterval(check);
+        unlisten();
+        s === 'done' ? resolve() : reject(new Error(`Ошибка в этапе ${stage}`));
+      }
+    });
+  });
 }
 
-// ── Toast ─────────────────────────────────────────────────────
-function showToast(name, type) {
-  const container = document.getElementById('toastContainer');
-  if (!container) return;
-  const toast = document.createElement('div');
-  toast.className = `toast toast-${type === 'done' ? 'done' : 'error'}`;
-  toast.textContent = type === 'done' ? `«${name}» завершён` : `«${name}» — ошибка`;
-  container.appendChild(toast);
-  toast.getBoundingClientRect();
-  toast.classList.add('toast-visible');
-  setTimeout(() => {
-    toast.classList.remove('toast-visible');
-    toast.classList.add('toast-hiding');
-    setTimeout(() => toast.remove(), 400);
-  }, 4000);
+async function runReal(stage) {
+  switch (stage) {
+
+    case 'pdm': {
+      const s = await invoke('get_settings');
+      await invoke('vault_get_bom', { partNumber: s.vault_part_number || '' });
+      break;
+    }
+
+    case 'excel':
+    case 'autocad': {
+      const waiter = waitForStage(stage);
+      await invoke('run_stage', { stage });
+      await waiter;
+      break;
+    }
+
+    case 'plantsim': {
+      const s = await invoke('get_settings');
+      const lnkPath = await invoke('find_plantsim_shortcut');
+      const sppPath = s.spp_path || '';
+      if (!sppPath) throw new Error('Путь к .spp модели не задан — откройте Настройки');
+      const method = s.sim_method || localStorage.getItem('lastSimMethod') || '.UserObjects.printed';
+      const waiter = waitForStage('plantsim');
+      await invoke('run_plantsim', { lnkPath, sppPath, method });
+      if (method) localStorage.setItem('lastSimMethod', method);
+      await waiter;
+      break;
+    }
+
+    default:
+      throw new Error(`Неизвестный этап: ${stage}`);
+  }
 }
 
-// ── Settings panel ────────────────────────────────────────────
-const panel   = document.getElementById('settingsPanel');
-const overlay = document.getElementById('settingsOverlay');
-const gearBtn = document.getElementById('gearBtn');
+// ── Настройки ──────────────────────────────────────────────────
+const settingsOverlay = document.getElementById('settingsOverlay');
+
+document.getElementById('btnSettings').addEventListener('click', openSettings);
+document.getElementById('btnCloseSettings').addEventListener('click', closeSettings);
+settingsOverlay.addEventListener('click', e => { if (e.target === settingsOverlay) closeSettings(); });
 
 function openSettings() {
-  panel.classList.add('open'); overlay.classList.add('visible'); gearBtn.classList.add('active');
+  settingsOverlay.classList.add('open');
+  loadSettings();
 }
 function closeSettings() {
-  panel.classList.remove('open'); overlay.classList.remove('visible'); gearBtn.classList.remove('active');
+  settingsOverlay.classList.remove('open');
 }
-gearBtn.addEventListener('click', () => panel.classList.contains('open') ? closeSettings() : openSettings());
-overlay.addEventListener('click', closeSettings);
-document.getElementById('btnCancel').addEventListener('click', closeSettings);
 
+async function loadSettings() {
+  try {
+    const s = await invoke('get_settings');
+    const set = (id, val) => { const el = document.getElementById(id); if (el && val) el.value = val; };
+    set('inputPlantSimShortcut', s.plant_sim_shortcut);
+    set('inputSppPath',          s.spp_path);
+    set('inputSimMethod',        s.sim_method);
+    set('inputVaultUrl',         s.vault_url);
+    set('inputVaultToken',       s.vault_token);
+    set('inputVaultPartNumber',  s.vault_part_number);
+  } catch (e) { console.error(e); }
+}
+
+document.getElementById('btnSave').addEventListener('click', async () => {
+  try {
+    const s = await invoke('get_settings');
+    const g = id => document.getElementById(id)?.value || '';
+    await invoke('save_settings', { settings: {
+      ...s,
+      plant_sim_shortcut: g('inputPlantSimShortcut'),
+      spp_path:           g('inputSppPath'),
+      sim_method:         g('inputSimMethod'),
+      vault_url:          g('inputVaultUrl'),
+      vault_token:        g('inputVaultToken'),
+      vault_part_number:  g('inputVaultPartNumber'),
+    }});
+    showToast('Настройки сохранены', 'success');
+    closeSettings();
+  } catch (e) { showToast('Ошибка сохранения', 'error'); }
+});
+
+// ── Browse кнопки ──────────────────────────────────────────────
 document.querySelectorAll('.browse-btn').forEach(btn => {
   btn.addEventListener('click', async () => {
     const targetId = btn.dataset.target;
-    const type     = btn.dataset.type;
-    const input    = document.getElementById(targetId);
+    const type = btn.dataset.type;
     try {
       let selected;
       if (type === 'folder') {
-        selected = await invoke('pick_folder', { title: 'Выберите папку', defaultPath: input.value || '' });
+        selected = await invoke('pick_folder', { title: 'Выберите папку', defaultPath: '' });
       } else {
-        const filter = targetId === 'inputPlantSimShortcut'
-          ? 'Ярлык Plant Simulation (*.lnk)|*.lnk|Все файлы (*.*)|*.*'
-          : 'Все файлы (*.*)|*.*';
-        selected = await invoke('pick_file', { title: 'Выберите файл', filter, defaultPath: input.value || '' });
+        const filter =
+          targetId === 'inputPlantSimShortcut' ? 'Ярлык Plant Simulation (*.lnk)|*.lnk|Все файлы (*.*)|*.*' :
+          targetId === 'inputSppPath'           ? 'Plant Simulation Model (*.spp)|*.spp|Все файлы (*.*)|*.*' :
+                                                  'Все файлы (*.*)|*.*';
+        selected = await invoke('pick_file', { title: 'Выберите файл', filter, defaultPath: '' });
       }
-      if (selected) { input.value = selected; clearError(targetId); }
-    } catch (e) { console.error('pick dialog:', e); }
+      if (selected) document.getElementById(targetId).value = selected;
+    } catch (e) { console.error(e); }
   });
 });
 
-document.getElementById('btnSave').addEventListener('click', async () => {
-  const ps  = document.getElementById('inputPlantSimShortcut').value;
-  const vu  = document.getElementById('inputVaultUrl').value;
-  const vt  = document.getElementById('inputVaultToken').value;
-  const vpn = document.getElementById('inputVaultPartNumber').value;
-
-  if (!ps.trim()) { showError('inputPlantSimShortcut', 'errPlantSimShortcut'); return; }
-  clearError('inputPlantSimShortcut');
-
-  try {
-    await invoke('save_settings', { settings: {
-      plant_sim_shortcut: ps,
-      vault_url: vu, vault_token: vt, vault_part_number: vpn,
-    }});
-    closeSettings();
-  } catch (e) { console.error('Save:', e); }
-});
-
-function showError(inputId, errId) {
-  document.getElementById(inputId)?.closest('.field-row')?.classList.add('error');
-  document.getElementById(errId)?.classList.add('visible');
+// ── Toasts ─────────────────────────────────────────────────────
+function showToast(msg, type = '') {
+  const t = document.createElement('div');
+  t.className = `toast${type ? ' ' + type : ''}`;
+  t.textContent = msg;
+  document.getElementById('toastContainer').appendChild(t);
+  setTimeout(() => t.remove(), 3000);
 }
-function clearError(inputId) {
-  document.getElementById(inputId)?.closest('.field-row')?.classList.remove('error');
-  const errId = 'err' + inputId.replace(/^input/, '');
-  document.getElementById(errId)?.classList.remove('visible');
-}
-
-document.getElementById('runPipeline')?.addEventListener('click', () => {
-  // Запустить все не завершённые этапы текущего шага последовательно
-  console.info('Run all: TODO');
-});
-
-// ── Tauri event listeners ─────────────────────────────────────
-window.addEventListener('DOMContentLoaded', async () => {
-
-  await listen('stage-status', (event) => {
-    const { stage, status } = event.payload;
-    updatePill(stage, status);
-    if (status === 'done') {
-      const label = STAGE_LABELS[stage] || stage;
-      setLogTitle(`${label} — Завершён`);
-      showToast(label, 'done');
-      lastSyncTime = Date.now();
-      onStageCompleted(stage);
-    } else if (status === 'error') {
-      failedAttempts++;
-      const label = STAGE_LABELS[stage] || stage;
-      setLogTitle(`${label} — Ошибка`);
-      showToast(label, 'error');
-    }
-  });
-
-  await listen('stage-log', (event) => {
-    appendLog(event.payload.stage, event.payload.line);
-  });
-
-  await listen('vault-bom', (event) => {
-    const { part_number, items } = event.payload;
-    document.getElementById('bomPartNumber').textContent = part_number;
-    document.getElementById('bomCount').textContent = `${items.length} поз.`;
-    renderBomTree(items);
-    showBomPanel(true);
-  });
-
-  await listen('stage-results', (event) => {
-    const { stage, load, throughput, cycle_time, oee, wip, lead_time, bottleneck } = event.payload;
-    if (stage !== 'plantsim') return;
-
-    appendLog('plantsim', `📊 Загрузка=${(load??0).toFixed(1)}%  Выпуск=${(throughput??0).toFixed(0)}  OEE=${(oee??0).toFixed(1)}%`);
-
-    const set = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
-    try {
-      set('rptLoad',       (load      ?? 0).toFixed(1));
-      set('rptThroughput', (throughput ?? 0).toFixed(0));
-      set('rptCycleTime',  (cycle_time ?? 0).toFixed(1));
-      set('rptOee',        oee  > 0 ? oee.toFixed(1)  : '—');
-      set('rptWip',        wip  > 0 ? wip.toFixed(0)  : '—');
-      set('rptLeadTime',   lead_time > 0 ? lead_time.toFixed(1) : '—');
-      const bn = document.getElementById('rptBottleneck');
-      if (bn) {
-        bn.textContent = bottleneck ? bottleneck.replace(/_/g, ' ') : '—';
-        bn.classList.toggle('report-value-alert', !!bottleneck);
-      }
-    } catch (e) { console.error('stage-results DOM:', e); }
-  });
-
-  // Загрузить настройки
-  try {
-    const s = await invoke('get_settings');
-    if (s.plant_sim_shortcut) document.getElementById('inputPlantSimShortcut').value = s.plant_sim_shortcut;
-    if (s.vault_url)          document.getElementById('inputVaultUrl').value          = s.vault_url;
-    if (s.vault_token)        document.getElementById('inputVaultToken').value        = s.vault_token;
-    if (s.vault_part_number)  document.getElementById('inputVaultPartNumber').value   = s.vault_part_number;
-  } catch (e) { console.warn('Settings load:', e); }
-});
