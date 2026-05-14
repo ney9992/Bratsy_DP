@@ -13,9 +13,11 @@ pub struct Settings {
     #[serde(default)] pub work_dir: String,
     #[serde(default)] pub scripts_dir: String,
     #[serde(default)] pub plant_sim_shortcut: String,
-    #[serde(default)] pub vault_url: String,          // "http://host:port" или "" для mock
-    #[serde(default)] pub vault_token: String,        // Bearer-токен
-    #[serde(default)] pub vault_part_number: String,  // обозначение по умолчанию
+    #[serde(default)] pub spp_path: String,           // путь к .spp модели для авто-запуска
+    #[serde(default)] pub sim_method: String,          // SimTalk метод для авто-запуска
+    #[serde(default)] pub vault_url: String,           // "http://host:port" или "" для mock
+    #[serde(default)] pub vault_token: String,         // Bearer-токен
+    #[serde(default)] pub vault_part_number: String,   // обозначение по умолчанию
 }
 
 // ProcessMap хранит PID запущенных процессов: stage_id -> pid
