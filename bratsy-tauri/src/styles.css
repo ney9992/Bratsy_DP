@@ -71,17 +71,30 @@ body {
 
 /* ── Content grid ─────────────────────────────────────────────── */
 .content-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
+  display: flex;
   overflow: hidden;
   min-height: 0;
 }
 
 /* ── Left panel ──────────────────────────────────────────────── */
 .left-panel {
+  width: 50%;
+  flex-shrink: 0;
   overflow-y: auto;
   background: var(--bg);
 }
+
+/* ── Resize handle ───────────────────────────────────────────── */
+.resize-handle {
+  width: 5px;
+  flex-shrink: 0;
+  background: var(--border);
+  cursor: col-resize;
+  transition: background 0.15s;
+  position: relative;
+}
+.resize-handle:hover,
+.resize-handle.dragging { background: var(--accent); }
 .left-panel::-webkit-scrollbar { width: 5px; }
 .left-panel::-webkit-scrollbar-track { background: transparent; }
 .left-panel::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
