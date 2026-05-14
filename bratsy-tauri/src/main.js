@@ -118,30 +118,24 @@ listen('stage-status', (evt) => {
 });
 
 listen('stage-results', (evt) => {
-  const v = evt.payload;
-  // Обновляем report-карточки в шаге 3
-  const set = (id, val) => {
-    const el = document.getElementById(id);
-    if (el) el.querySelector('.rpt-value').textContent = val;
-  };
-  set('rptLoad',       v.load);
-  set('rptThroughput', v.throughput);
-  set('rptCycleTime',  v.cycle_time);
-  set('rptOee',        v.oee);
-  set('rptWip',        v.wip);
-  set('rptLeadTime',   v.lead_time);
-  set('rptBottleneck', v.bottleneck);
-  // Также выводим в консоль
+  const { entries } = evt.payload;
+  const grid  = document.getElementById('reportGridDyn');
+  const empty = document.getElementById('rptEmpty');
+  grid.innerHTML = '';
+  if (entries && entries.length > 0) {
+    if (empty) empty.style.display = 'none';
+    entries.forEach(({ key, value }) => {
+      const card = document.createElement('div');
+      card.className = 'rpt-card-dyn';
+      card.innerHTML = `<div class="rpt-key">${esc(key)}</div><div class="rpt-val">${esc(value)}</div>`;
+      grid.appendChild(card);
+    });
+  }
   csep();
   clog('══ РЕЗУЛЬТАТЫ СИМУЛЯЦИИ ══════════════', 'header');
-  clog(`Загрузка:    ${v.load}%`,           'result');
-  clog(`Выпуск:      ${v.throughput} ед/ч`, 'result');
-  clog(`Цикл:        ${v.cycle_time} с`,    'result');
-  clog(`OEE:         ${v.oee}%`,            'result');
-  clog(`WIP:         ${v.wip} ед.`,         'result');
-  clog(`Lead time:   ${v.lead_time} мин`,   'result');
-  clog(`Узкое место: ${v.bottleneck}`,      'result');
+  (entries || []).forEach(({ key, value }) => clog(`${key}: ${value}`, 'result'));
   csep();
+  showTab('report');
 });
 
 listen('vault-bom', (evt) => {
