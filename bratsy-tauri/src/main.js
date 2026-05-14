@@ -8,6 +8,40 @@ getVersion().then(v => {
   if (el) el.textContent = 'v' + v;
 });
 
+// ── Resize handle ──────────────────────────────────────────────
+(function initResize() {
+  const handle     = document.getElementById('resizeHandle');
+  const leftPanel  = document.querySelector('.left-panel');
+  const grid       = document.querySelector('.content-grid');
+  const STORAGE_KEY = 'panelLeftPct';
+
+  const saved = parseFloat(localStorage.getItem(STORAGE_KEY));
+  if (!isNaN(saved)) leftPanel.style.width = saved + '%';
+
+  handle.addEventListener('mousedown', e => {
+    e.preventDefault();
+    handle.classList.add('dragging');
+    const startX    = e.clientX;
+    const startW    = leftPanel.getBoundingClientRect().width;
+    const totalW    = grid.getBoundingClientRect().width;
+
+    function onMove(e) {
+      const delta  = e.clientX - startX;
+      const newPct = Math.min(80, Math.max(20, (startW + delta) / totalW * 100));
+      leftPanel.style.width = newPct + '%';
+    }
+    function onUp() {
+      handle.classList.remove('dragging');
+      const pct = parseFloat(leftPanel.style.width);
+      if (!isNaN(pct)) localStorage.setItem(STORAGE_KEY, pct.toFixed(1));
+      document.removeEventListener('mousemove', onMove);
+      document.removeEventListener('mouseup', onUp);
+    }
+    document.addEventListener('mousemove', onMove);
+    document.addEventListener('mouseup', onUp);
+  });
+})();
+
 // ── Метаданные ─────────────────────────────────────────────────
 const IMPORT_STAGES = ['pdm', 'excel', 'autocad'];
 const SIM_STAGES    = ['plantsim'];
