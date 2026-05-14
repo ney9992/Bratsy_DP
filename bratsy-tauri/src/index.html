@@ -197,14 +197,20 @@
     <!-- RESIZE HANDLE -->
     <div class="resize-handle" id="resizeHandle"></div>
 
-    <!-- RIGHT: Консоль -->
+    <!-- RIGHT: Консоль / Отчёт -->
     <div class="right-panel">
-      <div class="console-topbar">
-        <span class="console-title">КОНСОЛЬ</span>
+      <div class="rp-tabs">
+        <button class="rp-tab rp-tab-active" id="tabConsole">КОНСОЛЬ</button>
+        <button class="rp-tab" id="tabReport">ОТЧЁТ</button>
+        <span class="rp-tabs-spacer"></span>
         <button class="clear-btn" id="btnClearConsole">Очистить</button>
       </div>
       <div class="console-body" id="consoleBody">
         <span class="cline cline-sys">Система готова. Нажмите «Запуск» ниже.</span>
+      </div>
+      <div class="report-view" id="reportView">
+        <div class="rpt-empty" id="rptEmpty">Данные появятся после завершения симуляции</div>
+        <div class="report-grid-dyn" id="reportGridDyn"></div>
       </div>
     </div>
 
