@@ -288,13 +288,6 @@ if ($d.ShowDialog() -eq [System.Windows.Forms.DialogResult]::OK) {{ Write-Output
     if path.is_empty() { None } else { Some(path) }
 }
 
-const LNK_NAME: &str = "DP_Plant_Simulation.exe.lnk";
-// Путь к PlantSimulation по умолчанию — стандартная установка Siemens
-const PLANTSIM_DEFAULT_TARGET: &str =
-    r"C:\Program Files\Siemens\Tecnomatix Plant Simulation 16\PlantSimulation16.exe";
-const PLANTSIM_DEFAULT_WORKDIR: &str =
-    r"C:\Program Files\Siemens\Tecnomatix Plant Simulation 16";
-
 /// Возвращает директорию исполняемого файла приложения.
 fn app_dir() -> PathBuf {
     std::env::current_exe()
