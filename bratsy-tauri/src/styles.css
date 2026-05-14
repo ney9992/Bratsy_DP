@@ -318,10 +318,11 @@ body {
 
 /* ── Right panel: console ─────────────────────────────────────── */
 .right-panel {
+  flex: 1;
   display: flex;
   flex-direction: column;
   background: var(--con-bg);
-  border-left: 1px solid #1A1F2E;
+  border-left: none;
   overflow: hidden;
 }
 
