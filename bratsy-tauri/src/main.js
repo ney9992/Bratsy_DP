@@ -92,6 +92,19 @@ document.getElementById('btnClearConsole').addEventListener('click', () => {
   clog('Консоль очищена.', 'sys');
 });
 
+// ── Переключение вкладок правой панели ─────────────────────────
+function showTab(tab) {
+  const isConsole = tab === 'console';
+  document.getElementById('tabConsole').classList.toggle('rp-tab-active', isConsole);
+  document.getElementById('tabReport').classList.toggle('rp-tab-active', !isConsole);
+  consoleBody.style.display = isConsole ? '' : 'none';
+  document.getElementById('reportView').classList.toggle('visible', !isConsole);
+  document.getElementById('btnClearConsole').style.display = isConsole ? '' : 'none';
+}
+
+document.getElementById('tabConsole').addEventListener('click', () => showTab('console'));
+document.getElementById('tabReport').addEventListener('click',  () => showTab('report'));
+
 // ── Tauri events → консоль ─────────────────────────────────────
 listen('stage-log', (evt) => {
   clog(evt.payload.line, 'log', evt.payload.stage);
