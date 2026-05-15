@@ -549,6 +549,7 @@ body {
 .browse-btn:hover { background: #E4E8F0; }
 .field-error { font-size: 11px; color: var(--red); margin-top: 4px; display: none; }
 .field-error.visible { display: block; }
+.field-hint { font-size: 11px; color: var(--muted); margin-top: 4px; }
 .settings-actions { margin-top: 20px; }
 .btn-save {
   width: 100%; padding: 10px; background: var(--blue); color: white;
