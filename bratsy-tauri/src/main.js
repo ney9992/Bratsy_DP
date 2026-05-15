@@ -461,12 +461,13 @@ document.getElementById('btnSave').addEventListener('click', async () => {
     const g = id => document.getElementById(id)?.value || '';
     await invoke('save_settings', { settings: {
       ...s,
-      plant_sim_shortcut: g('inputPlantSimShortcut'),
-      spp_path:           g('inputSppPath'),
-      sim_method:         g('inputSimMethod'),
-      vault_url:          g('inputVaultUrl'),
-      vault_token:        g('inputVaultToken'),
-      vault_part_number:  g('inputVaultPartNumber'),
+      plant_sim_shortcut:  g('inputPlantSimShortcut'),
+      spp_path:            g('inputSppPath'),
+      sim_method:          g('inputSimMethod'),
+      vault_url:           g('inputVaultUrl'),
+      vault_token:         g('inputVaultToken'),
+      vault_part_number:   g('inputVaultPartNumber'),
+      sim_timeout_minutes: parseInt(g('inputSimTimeout'), 10) || 0,
     }});
     showToast('Настройки сохранены', 'success');
     settingsOverlay.classList.remove('open');
