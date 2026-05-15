@@ -333,20 +333,10 @@ fn find_plantsim_shortcut() -> Result<String, String> {
 #[tauri::command]
 async fn run_plantsim(
     lnk_path: String,
-    spp_path: String,
-    method: String,
+    method: String,  // опционально: если задан в настройках, вписывается в Arguments ярлыка
     state: tauri::State<'_, ProcessMap>,
     app_handle: tauri::AppHandle,
 ) -> Result<(), String> {
-    // CR-01: валидация method — разрешены только безопасные символы SimTalk-имени
-    if !method.chars().all(|c| c.is_alphanumeric() || "._ -".contains(c)) || method.trim().is_empty() {
-        return Err("config: недопустимые символы в имени метода. Используйте только буквы, цифры, точки и пробелы.".into());
-    }
-
-    if !std::path::Path::new(&spp_path).exists() {
-        return Err(format!("config: файл модели не найден: {}", spp_path));
-    }
-
     {
         let mut map = state.0.lock().unwrap();
         if map.contains_key("plantsim") {
@@ -360,34 +350,42 @@ async fn run_plantsim(
         status: "running".to_string(),
     });
 
-    // CR-01: экранируем кавычки в путях перед вставкой в PS-строку
-    let lnk_escaped = lnk_path.replace('"', "`\"");
-    let spp_escaped = spp_path.replace('"', "`\"");
-
-    // Модифицируем ярлык через WScript.Shell: прописываем путь к модели и метод
-    let modify_cmd = format!(
-        r#"$s=(New-Object -ComObject WScript.Shell).CreateShortcut("{}");$s.Arguments='-f "{}" /E {}';$s.Save()"#,
-        lnk_escaped, spp_escaped, method
-    );
-    if let Err(e) = Command::new("powershell")
-        .args(["-ExecutionPolicy", "Bypass", "-NonInteractive", "-Command", &modify_cmd])
-        .output()
-    {
-        let mut map = state.0.lock().unwrap();
-        map.remove("plantsim");
-        return Err(format!("Ошибка модификации ярлыка: {}", e));
-    }
-
-    for line in [
-        format!("Запуск Plant Simulation: {}", spp_path),
-        format!("Метод: {}", method),
-        "Ожидание завершения симуляции...".to_string(),
-    ] {
+    // Если метод задан в настройках — вписываем /E {method} в Arguments ярлыка
+    let trimmed_method = method.trim().to_string();
+    if !trimmed_method.is_empty() {
+        // Валидация: только безопасные символы SimTalk-имени
+        if !trimmed_method.chars().all(|c| c.is_alphanumeric() || "._ -".contains(c)) {
+            let mut map = state.0.lock().unwrap();
+            map.remove("plantsim");
+            return Err("config: недопустимые символы в имени метода. Используйте только буквы, цифры, точки и пробелы.".into());
+        }
+        let lnk_escaped = lnk_path.replace('"', "`\"");
+        let modify_cmd = format!(
+            r#"$s=(New-Object -ComObject WScript.Shell).CreateShortcut("{}");$s.Arguments='/E {}';$s.Save()"#,
+            lnk_escaped, trimmed_method
+        );
+        if let Err(e) = Command::new("powershell")
+            .args(["-ExecutionPolicy", "Bypass", "-NonInteractive", "-Command", &modify_cmd])
+            .output()
+        {
+            let mut map = state.0.lock().unwrap();
+            map.remove("plantsim");
+            return Err(format!("Ошибка модификации ярлыка: {}", e));
+        }
         let _ = app_handle.emit("stage-log", StageLogPayload {
             stage: "plantsim".to_string(),
-            line,
+            line: format!("Метод SimTalk: {}", trimmed_method),
         });
     }
+
+    let _ = app_handle.emit("stage-log", StageLogPayload {
+        stage: "plantsim".to_string(),
+        line: "Запуск Plant Simulation через ярлык...".to_string(),
+    });
+    let _ = app_handle.emit("stage-log", StageLogPayload {
+        stage: "plantsim".to_string(),
+        line: "Ожидание завершения симуляции...".to_string(),
+    });
 
     // Запускаем через ярлык и ждём закрытия Plant Simulation
     let wait_cmd = format!(
