@@ -424,7 +424,7 @@ async fn run_plantsim(
         "Start-Process -FilePath '{}' -Wait",
         lnk_path.replace('\'', "''")
     );
-    let mut child = Command::new("powershell")
+    let child = Command::new("powershell")
         .args(["-ExecutionPolicy", "Bypass", "-NonInteractive", "-Command", &wait_cmd])
         .stdout(Stdio::piped())
         .stderr(Stdio::null())
