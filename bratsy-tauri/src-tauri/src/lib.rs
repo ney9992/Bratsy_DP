@@ -353,19 +353,46 @@ async fn run_plantsim(
         status: "running".to_string(),
     });
 
-    // Если метод задан в настройках — вписываем /E {method} в Arguments ярлыка
+    // D-08: читаем spp_path и work_dir из Settings внутри функции
+    let settings = get_settings();
+
+    // D-03: валидация work_dir — блокировать до WScript.Shell
+    if settings.work_dir.is_empty() {
+        let mut map = state.0.lock().unwrap();
+        map.remove("plantsim");
+        return Err("config: Рабочий каталог (work_dir) не задан. Откройте Настройки и укажите рабочую директорию.".into());
+    }
+
+    // D-07: валидация spp_path — блокировать до WScript.Shell
+    if settings.spp_path.is_empty() || !std::path::Path::new(&settings.spp_path).exists() {
+        let mut map = state.0.lock().unwrap();
+        map.remove("plantsim");
+        return Err(format!("config: Файл модели .spp не найден: '{}'. Откройте Настройки и укажите путь к .spp файлу.", settings.spp_path));
+    }
+
+    // D-06: валидация метода — только если задан
     let trimmed_method = method.trim().to_string();
     if !trimmed_method.is_empty() {
-        // Валидация: только безопасные символы SimTalk-имени
         if !trimmed_method.chars().all(|c| c.is_alphanumeric() || "._ -".contains(c)) {
             let mut map = state.0.lock().unwrap();
             map.remove("plantsim");
             return Err("config: недопустимые символы в имени метода. Используйте только буквы, цифры, точки и пробелы.".into());
         }
+    }
+
+    // D-06: всегда модифицируем .lnk с полной строкой Arguments
+    {
         let lnk_escaped = lnk_path.replace('"', "`\"");
+        let spp_escaped = settings.spp_path.replace('"', "`\"");
+        let workdir_escaped = settings.work_dir.replace('"', "`\"");
+        let arguments_str = if trimmed_method.is_empty() {
+            format!("-f \"{}\" --workdir \"{}\"", spp_escaped, workdir_escaped)
+        } else {
+            format!("-f \"{}\" /E {} --workdir \"{}\"", spp_escaped, trimmed_method, workdir_escaped)
+        };
         let modify_cmd = format!(
-            r#"$s=(New-Object -ComObject WScript.Shell).CreateShortcut("{}");$s.Arguments='/E {}';$s.Save()"#,
-            lnk_escaped, trimmed_method
+            r#"$s=(New-Object -ComObject WScript.Shell).CreateShortcut("{}");$s.Arguments='{}';$s.Save()"#,
+            lnk_escaped, arguments_str.replace('\'', "''")
         );
         if let Err(e) = Command::new("powershell")
             .args(["-ExecutionPolicy", "Bypass", "-NonInteractive", "-Command", &modify_cmd])
@@ -375,10 +402,12 @@ async fn run_plantsim(
             map.remove("plantsim");
             return Err(format!("Ошибка модификации ярлыка: {}", e));
         }
-        let _ = app_handle.emit("stage-log", StageLogPayload {
-            stage: "plantsim".to_string(),
-            line: format!("Метод SimTalk: {}", trimmed_method),
-        });
+        if !trimmed_method.is_empty() {
+            let _ = app_handle.emit("stage-log", StageLogPayload {
+                stage: "plantsim".to_string(),
+                line: format!("Метод SimTalk: {}", trimmed_method),
+            });
+        }
     }
 
     let _ = app_handle.emit("stage-log", StageLogPayload {
