@@ -7,6 +7,8 @@ use std::path::PathBuf;
 use std::process::{Command, Stdio};
 use tauri::Emitter;
 
+const APP_VERSION: &str = env!("CARGO_PKG_VERSION");
+
 #[derive(Serialize, Deserialize, Clone, Default)]
 pub struct Settings {
     #[serde(default)] pub plant_sim_path: String,
@@ -18,6 +20,7 @@ pub struct Settings {
     #[serde(default)] pub vault_url: String,           // "http://host:port" или "" для mock
     #[serde(default)] pub vault_token: String,         // Bearer-токен
     #[serde(default)] pub vault_part_number: String,   // обозначение по умолчанию
+    #[serde(default)] pub sim_timeout_minutes: u32,    // D-09: таймаут симуляции (мин), 0 = default 2 мин
 }
 
 // ProcessMap хранит PID запущенных процессов: stage_id -> pid

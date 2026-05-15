@@ -1,4 +1,4 @@
-# Phase 4: Данные Plant Simulation — Research
+﻿# Phase 4: Данные Plant Simulation — Research
 
 **Researched:** 2026-05-10
 **Domain:** Tecnomatix Plant Simulation 16 — SimTalk file I/O, CLI-интерфейс, запуск через .lnk-ярлык, отладка сквозного пайплайна
@@ -624,27 +624,31 @@ Command::new(&plant_sim_exe)
 
 ---
 
-## Open Questions
+## Open Questions (RESOLVED)
 
 1. **Прямой запуск vs. через .lnk**
    - Что знаем: текущая реализация через .lnk работает в Phase 3 с mock
    - Что неясно: ждёт ли `Start-Process -Wait '<lnk>'` именно PlantSim, а не launcher
    - Рекомендация: если проблема обнаружится → добавить поле "Путь к PlantSimulation.exe" в Settings и переключиться на прямой запуск exe
+   - **RESOLVED:** оставляем .lnk — текущая реализация Phase 3 валидна. Прямой запуск — опциональное улучшение, не требование Phase 4.
 
 2. **Путь work_dir в SimTalk**
    - Что знаем: Rust знает work_dir из Settings; SimTalk должен знать тот же путь
    - Что неясно: как передать work_dir из Rust в SimTalk без хардкода в .spp
    - Рекомендация: для v1 — хардкодить путь в SimTalk-методе (пользователь делает сам). Для v2 — передавать через getCommandLineArg
+   - **RESOLVED:** D-01/D-02 (CONTEXT.md) — Rust передаёт --workdir в Arguments .lnk; SimTalk читает через getCommandLineArg.
 
 3. **Точные имена SimTalk-атрибутов для load/throughput/cycle_time**
    - Что знаем: `statPercBusy`, `statNumExited`, `statTimeProc` — стандартные атрибуты объектов PlantSim
    - Что неясно: точные имена объектов в конкретной модели пользователя
    - Рекомендация: это ответственность пользователя, не приложения. В документации описать контракт (формат results.txt), а не привязку к конкретным атрибутам
+   - **RESOLVED:** ответственность пользователя (CONTEXT.md out-of-scope). Приложение предоставляет SimTalk-шаблон с примерами атрибутов; конкретные имена пользователь подставляет сам.
 
 4. **Что если PlantSim не закрывается сам**
    - Что знаем: `exitApplication` закрывает PlantSim программно
    - Что неясно: что если SimTalk-ошибка предотвращает вызов `exitApplication`
    - Рекомендация: таймаут. Rust может добавить таймаут в `spawn_blocking` (после N минут — `taskkill PlantSim`). Для v1 — не блокер, т.к. пользователь присутствует рядом
+   - **RESOLVED:** D-09/D-10 (CONTEXT.md) — таймаут через recv_timeout в spawn_blocking + taskkill /F /IM PlantSimulation*.exe /T. Значение из Settings.sim_timeout_minutes (default 2 мин).
 
 ---
 
