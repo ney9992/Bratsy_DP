@@ -463,6 +463,7 @@ async function loadSettings() {
     const set = (id, val) => { const el = document.getElementById(id); if (el && val) el.value = val; };
     set('inputPlantSimShortcut', s.plant_sim_shortcut);
     set('inputSppPath',          s.spp_path);
+    set('inputWorkDir',          s.work_dir);
     set('inputSimMethod',        s.sim_method);
     set('inputVaultUrl',         s.vault_url);
     set('inputVaultToken',       s.vault_token);
