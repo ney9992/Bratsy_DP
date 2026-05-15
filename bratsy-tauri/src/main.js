@@ -418,6 +418,18 @@ async function runReal(stage) {
 // ── Настройки ──────────────────────────────────────────────────
 const settingsOverlay = document.getElementById('settingsOverlay');
 
+// Показывает ошибку конфигурации (паттерн D-13 Phase 3)
+// msg — строка ошибки от Rust (начинается с "config: ...")
+function showConfigError(msg) {
+  // Убрать префикс "config: " для отображения
+  const display = msg.startsWith('config: ') ? msg.slice(8) : msg;
+  const confirmed = confirm(display + '\n\nОткрыть настройки?');
+  if (confirmed) {
+    settingsOverlay.classList.add('open');
+    loadSettings();
+  }
+}
+
 document.getElementById('btnSettings').addEventListener('click', () => {
   settingsOverlay.classList.add('open');
   loadSettings();
