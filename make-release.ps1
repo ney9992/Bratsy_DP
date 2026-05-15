@@ -8,8 +8,8 @@ Set-Location "$PSScriptRoot\bratsy-tauri"
 Write-Host ""
 Write-Host "==> Cleaning build cache..." -ForegroundColor Cyan
 $buildDir = ".\src-tauri\target\release"
-Get-ChildItem "$buildDir\build\bratsy-tauri-*"      -ErrorAction SilentlyContinue | Remove-Item -Recurse -Force
-Get-ChildItem "$buildDir\.fingerprint\bratsy-tauri-*" -ErrorAction SilentlyContinue | Remove-Item -Recurse -Force
+Get-ChildItem "$buildDir\build\dp-orchestra-*"      -ErrorAction SilentlyContinue | Remove-Item -Recurse -Force
+Get-ChildItem "$buildDir\.fingerprint\dp-orchestra-*" -ErrorAction SilentlyContinue | Remove-Item -Recurse -Force
 Remove-Item "$buildDir\bratsy-tauri.exe" -Force -ErrorAction SilentlyContinue
 
 # ── 2. Build ─────────────────────────────────────────────────────
