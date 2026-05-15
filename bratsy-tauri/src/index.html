@@ -227,6 +227,22 @@
           <div class="field-hint">Через сколько минут принудительно остановить PlantSim (0 = 2 мин)</div>
         </div>
 
+        <div class="field-group">
+          <label class="field-label">Путь к .spp файлу</label>
+          <div class="field-row">
+            <input class="field-input" id="inputSppPath" type="text" readonly placeholder="Укажите путь к .spp файлу">
+            <button class="browse-btn" data-target="inputSppPath" data-type="file">…</button>
+          </div>
+        </div>
+
+        <div class="field-group">
+          <label class="field-label">Рабочий каталог</label>
+          <div class="field-row">
+            <input class="field-input" id="inputWorkDir" type="text" readonly placeholder="Рабочий каталог (куда PlantSim пишет results.txt)">
+            <button class="browse-btn" data-target="inputWorkDir" data-type="folder">…</button>
+          </div>
+        </div>
+
         <div class="settings-section-label">VAULT PDM API</div>
 
         <div class="field-group">
