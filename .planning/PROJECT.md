@@ -70,7 +70,7 @@ DP_orchestra — центральный оркестрационный слой 
 
 ## Constraints
 
-- **Tech stack**: PowerShell + Windows Forms — переписывание не планируется, уже работает в заводской среде
+- **Tech stack**: Tauri v2 (Rust + HTML/CSS/JS) — выбрано для лучшего UI через WebView2 при сохранении Windows-only развёртывания
 - **Platform**: Windows only — все интегрируемые системы требуют Windows
 - **Integration**: запуск скриптов/макросов — не COM/API, проще поддерживать при обновлениях ПО
 - **Distribution**: .exe без зависимостей — заводские ПК могут не иметь прав на установку пакетов
