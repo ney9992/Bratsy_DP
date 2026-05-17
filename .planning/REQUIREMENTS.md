@@ -50,9 +50,9 @@
 | PIPE-03 | Phase 2 | Done |
 | UI-01 | Phase 2 | Done |
 | UI-03 | Phase 2 | Done |
-| INT-01 | Phase 3 | Pending |
-| INT-02 | Phase 3 | Pending |
-| PIPE-04 | Phase 3 | Pending |
+| INT-01 | Phase 3+4 | Done |
+| INT-02 | Phase 3+4 | Done |
+| PIPE-04 | Phase 3+4 | Done |
 
 ---
 *Last updated: 2026-05-09 вЂ” Phase 2 complete (PIPE-01, PIPE-02, PIPE-03, UI-01, UI-03 done)*
