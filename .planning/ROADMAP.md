@@ -112,4 +112,4 @@ Plans:
 **Mapped: 10/10 – 100% coverage**
 
 ---
-*Last updated: 2026-05-15 – Phase 4 gap closure plan 04-03 added (inputSppPath + inputWorkDir)*
+*Last updated: 2026-05-17 – Phase 4 complete, milestone v1 закрыт*
