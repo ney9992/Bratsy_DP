@@ -214,14 +214,14 @@ function resetAccordion() {
   document.getElementById('tagImport').textContent = '0 / 3 загружено';
   // Шаг 2 → locked
   const s2 = document.getElementById('stepSim');
-  s2.className = 'step step-locked';
+  s2.className = 'step step-locked step-collapsed';
   document.getElementById('num2').className = 'step-num step-num-locked';
   document.getElementById('num2').textContent = '2';
   document.getElementById('tagSim').className = 'step-tag step-tag-locked';
   document.getElementById('tagSim').textContent = '0 / 1 выполнено';
   // Шаг 3 → locked
   const s3 = document.getElementById('stepReport');
-  s3.className = 'step step-locked';
+  s3.className = 'step step-locked step-collapsed';
   document.getElementById('num3').className = 'step-num step-num-report';
   document.getElementById('num3').textContent = '3';
   document.getElementById('tagReport').textContent = 'Ожидание данных';
