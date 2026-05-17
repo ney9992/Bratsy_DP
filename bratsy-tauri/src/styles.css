@@ -509,6 +509,33 @@ body {
   50%      { box-shadow: 0 6px 36px rgba(217,119,6,0.65); }
 }
 
+.app-footer { position: relative; }
+
+.experiments-btn {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 8px 14px;
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--text-muted);
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.03em;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+.experiments-btn:hover {
+  background: var(--surface-hover, rgba(255,255,255,0.05));
+  color: var(--text);
+  border-color: var(--border-hover, #4A90D9);
+}
+
 /* ── Settings overlay ────────────────────────────────────────── */
 .settings-overlay {
   position: fixed; inset: 0;
