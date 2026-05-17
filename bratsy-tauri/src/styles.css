@@ -213,6 +213,10 @@ body {
   filter: grayscale(0.6);
   pointer-events: none;
 }
+.stage-card.card-disabled .mode-toggle {
+  pointer-events: auto;
+  opacity: 0.85;
+}
 
 .stage-icon-wrap {
   width: 52px; height: 52px;
