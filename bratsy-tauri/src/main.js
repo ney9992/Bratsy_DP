@@ -196,7 +196,7 @@ function activateReportStep() {
   document.getElementById('tagSim').textContent = 'Симуляция завершена';
   // Шаг 3 → active
   const s3 = document.getElementById('stepReport');
-  s3.classList.remove('step-locked');
+  s3.classList.remove('step-locked', 'step-collapsed');
   s3.classList.add('step-active');
   document.getElementById('num3').className = 'step-num step-num-report';
   document.getElementById('tagReport').textContent = 'Результаты получены';
