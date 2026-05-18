@@ -9,18 +9,35 @@ use tauri::Emitter;
 
 const APP_VERSION: &str = env!("CARGO_PKG_VERSION");
 
-#[derive(Serialize, Deserialize, Clone, Default)]
+#[derive(Serialize, Deserialize, Clone)]
 pub struct Settings {
     #[serde(default)] pub plant_sim_path: String,
     #[serde(default)] pub work_dir: String,
     #[serde(default)] pub scripts_dir: String,
     #[serde(default)] pub plant_sim_shortcut: String,
-    #[serde(default)] pub spp_path: String,           // путь к .spp модели для авто-запуска
-    #[serde(default)] pub sim_method: String,          // SimTalk метод для авто-запуска
-    #[serde(default)] pub vault_url: String,           // "http://host:port" или "" для mock
-    #[serde(default)] pub vault_token: String,         // Bearer-токен
-    #[serde(default)] pub vault_part_number: String,   // обозначение по умолчанию
-    #[serde(default)] pub sim_timeout_minutes: u32,    // D-09: таймаут симуляции (мин), 0 = default 2 мин
+    #[serde(default)] pub spp_path: String,
+    #[serde(default)] pub sim_method: String,
+    #[serde(default)] pub vault_url: String,
+    #[serde(default)] pub vault_token: String,
+    #[serde(default)] pub vault_part_number: String,
+    #[serde(default)] pub sim_timeout_minutes: u32,
+}
+
+impl Default for Settings {
+    fn default() -> Self {
+        Self {
+            plant_sim_path:       String::new(),
+            work_dir:             r"C:\Users\neypertta\Documents\ЦИФРОВОЙ ЗАВОД".to_string(),
+            scripts_dir:          String::new(),
+            plant_sim_shortcut:   r"C:\Users\neypertta\Documents\ЦИФРОВОЙ ЗАВОД\DP_Plant_Simulation.exe.lnk".to_string(),
+            spp_path:             r"C:\Users\neypertta\Documents\ЦИФРОВОЙ ЗАВОД\test.spp".to_string(),
+            sim_method:           String::new(),
+            vault_url:            "http://VLT02CHD:8080".to_string(),
+            vault_token:          String::new(),
+            vault_part_number:    "1006662".to_string(),
+            sim_timeout_minutes:  2,
+        }
+    }
 }
 
 // ProcessMap хранит PID запущенных процессов: stage_id -> pid
