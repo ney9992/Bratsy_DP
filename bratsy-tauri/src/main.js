@@ -100,6 +100,7 @@ function showTab(tab) {
   consoleBody.style.display = isConsole ? '' : 'none';
   document.getElementById('reportView').classList.toggle('visible', !isConsole);
   document.getElementById('btnClearConsole').style.display = isConsole ? '' : 'none';
+  document.querySelector('.right-panel').classList.toggle('is-report', !isConsole);
 }
 
 document.getElementById('tabConsole').addEventListener('click', () => showTab('console'));
@@ -121,15 +122,54 @@ listen('stage-results', (evt) => {
   const { entries } = evt.payload;
   const grid  = document.getElementById('reportGridDyn');
   const empty = document.getElementById('rptEmpty');
+  const chip  = document.getElementById('rptCount');
+  const sub   = document.getElementById('rptToolbarSub');
   grid.innerHTML = '';
   if (entries && entries.length > 0) {
     if (empty) empty.style.display = 'none';
     entries.forEach(({ key, value }) => {
       const card = document.createElement('div');
       card.className = 'rpt-card-dyn';
-      card.innerHTML = `<div class="rpt-key">${esc(key)}</div><div class="rpt-val">${esc(value)}</div>`;
+      // Разделяем число и единицу измерения, если значение похоже на число
+      const raw = String(value).trim();
+      const m = raw.match(/^(-?[\d][\d\s.,]*)\s*(.*)$/);
+      const isNumeric = m && /\d/.test(m[1]);
+      let valHTML;
+      if (isNumeric) {
+        const num = m[1].trim();
+        const unit = (m[2] || '').trim();
+        valHTML = `<span class="rpt-val-num">${esc(num)}</span>` +
+                  (unit ? `<span class="rpt-val-unit">${esc(unit)}</span>` : '');
+      } else {
+        valHTML = `<span class="rpt-val-text">${esc(raw)}</span>`;
+        if (raw.length > 22) card.classList.add('wide');
+      }
+      card.innerHTML =
+        `<div class="rpt-card-head">` +
+          `<span class="rpt-card-bullet"></span>` +
+          `<span class="rpt-key">${esc(key)}</span>` +
+        `</div>` +
+        `<div class="rpt-val">${valHTML}</div>`;
       grid.appendChild(card);
     });
+    if (chip) {
+      const n = entries.length;
+      const word = n % 10 === 1 && n % 100 !== 11 ? 'метрика'
+                : (n % 10 >= 2 && n % 10 <= 4 && (n % 100 < 10 || n % 100 >= 20)) ? 'метрики'
+                : 'метрик';
+      chip.textContent = `${n} ${word}`;
+      chip.classList.remove('is-empty');
+    }
+    if (sub) {
+      const ts = new Date();
+      const hh = String(ts.getHours()).padStart(2, '0');
+      const mm = String(ts.getMinutes()).padStart(2, '0');
+      sub.textContent = `Получено · сегодня в ${hh}:${mm}`;
+    }
+  } else {
+    if (empty) empty.style.display = '';
+    if (chip) { chip.textContent = '— метрик'; chip.classList.add('is-empty'); }
+    if (sub)  sub.textContent = 'Карточки появятся после расчёта';
   }
   csep();
   clog('══ РЕЗУЛЬТАТЫ СИМУЛЯЦИИ ══════════════', 'header');
@@ -229,6 +269,10 @@ function resetAccordion() {
   if (grid) grid.innerHTML = '';
   const empty = document.getElementById('rptEmpty');
   if (empty) empty.style.display = '';
+  const chip = document.getElementById('rptCount');
+  if (chip) { chip.textContent = '— метрик'; chip.classList.add('is-empty'); }
+  const sub = document.getElementById('rptToolbarSub');
+  if (sub) sub.textContent = 'Карточки появятся после расчёта';
   showTab('console');
 }
 

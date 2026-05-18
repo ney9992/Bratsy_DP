@@ -179,7 +179,25 @@
         <span class="cline cline-sys">Система готова. Нажмите «Запуск» ниже.</span>
       </div>
       <div class="report-view" id="reportView">
-        <div class="rpt-empty" id="rptEmpty">Данные появятся после завершения симуляции</div>
+        <div class="rpt-toolbar">
+          <div class="rpt-toolbar-main">
+            <div class="rpt-toolbar-title">Результаты симуляции</div>
+            <div class="rpt-toolbar-sub" id="rptToolbarSub">Карточки появятся после расчёта</div>
+          </div>
+          <div class="rpt-toolbar-meta">
+            <div class="rpt-stat-chip is-empty" id="rptCount">— метрик</div>
+          </div>
+        </div>
+        <div class="rpt-empty" id="rptEmpty">
+          <div class="rpt-empty-icon">
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M3 3v18h18"/>
+              <path d="M7 15l4-4 3 3 5-6"/>
+            </svg>
+          </div>
+          <div class="rpt-empty-title">Отчёт ещё не сформирован</div>
+          <div class="rpt-empty-hint">Запустите пайплайн — метрики Plant Simulation появятся здесь автоматически</div>
+        </div>
         <div class="report-grid-dyn" id="reportGridDyn"></div>
       </div>
     </div>
